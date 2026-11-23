@@ -1,0 +1,5 @@
+# Extra packages for possession.video, on top of requirements.txt.
+# ultralytics brings PyTorch and OpenCV; ffmpeg (outside pip) is needed for annotated.mp4.
+ultralytics>=8.4
+scikit-learn>=1.3
+numpy>=1.26
