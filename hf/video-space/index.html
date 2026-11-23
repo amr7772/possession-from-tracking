@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who has the ball? Possession from a match video</title>
+<style>
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6; --series-2: #eb6834; --on-fill: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5; --series-2: #d95926;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 32px 16px 48px; }
+.wrap { max-width: 960px; margin: 0 auto; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+h2 { font-size: 16px; font-weight: 600; margin: 0 0 2px; }
+.sub { color: var(--text-secondary); margin: 0 0 6px; }
+.ar { direction: rtl; text-align: right; color: var(--text-secondary); font-size: 14px; margin: 0 0 24px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 0 0 16px; }
+.note { color: var(--text-secondary); font-size: 13px; margin: 0 0 14px; }
+.warn { border-left: 3px solid var(--axis); padding: 8px 12px; margin: 0 0 16px; color: var(--text-secondary); }
+.row { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; margin: 14px 0; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-secondary); }
+input[type=text] { font: inherit; color: var(--text-primary); background: var(--page); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; }
+#teams { width: 290px; max-width: 100%; } #from, #to { width: 96px; }
+input[type=file] { font: inherit; color: var(--text-secondary); max-width: 100%; }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 8px 18px; border: 1px solid var(--border);
+  cursor: pointer; background: var(--surface-1); color: var(--text-primary); }
+button.primary { background: var(--text-primary); color: var(--surface-1); border-color: transparent; }
+button:disabled { opacity: .45; cursor: default; }
+.progress { height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; margin: 16px 0 8px; }
+.progress > div { height: 100%; width: 0; background: var(--series-1); transition: width .2s; }
+#status { margin: 0; color: var(--text-secondary); font-size: 14px; font-variant-numeric: tabular-nums; }
+#error { margin: 8px 0 0; color: var(--text-primary); font-size: 14px; }
+.player { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+.player video { display: block; width: 100%; height: auto; }
+.player:fullscreen video { height: 100%; object-fit: contain; }
+.player canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.player-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
+.split { display: flex; gap: 2px; height: 28px; margin: 14px 0 10px; }
+.split .seg { border-radius: 4px; color: var(--on-fill); font-weight: 600; font-size: 14px;
+  display: flex; align-items: center; padding-left: 8px; white-space: nowrap; outline-offset: 2px; }
+.split .seg:hover, .split .seg:focus { filter: brightness(1.08); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--text-primary); font-size: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+svg text { fill: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+svg .lane-label { fill: var(--text-secondary); font-size: 13px; font-variant-numeric: normal; }
+.chart { position: relative; }
+.tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  display: none; white-space: nowrap; z-index: 2; }
+.tip b { font-weight: 600; }
+.tip .row2 { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
+.tip .row2 b { color: var(--text-primary); }
+.tip .key { width: 12px; height: 2px; border-radius: 1px; display: inline-block; }
+.tip .when { color: var(--text-muted); margin-bottom: 2px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--grid); }
+th { color: var(--text-secondary); font-weight: 500; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.chip { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: -1px;
+  box-shadow: 0 0 0 1px var(--axis); margin-right: 6px; }
+details { margin-top: 12px; }
+summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+details table { margin-top: 8px; }
+.scroll { max-height: 320px; overflow: auto; }
+.method p { margin: 0 0 8px; color: var(--text-secondary); font-size: 14px; }
+.method ul { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: 14px; }
+.downloads { display: flex; flex-wrap: wrap; gap: 10px; }
+footer { color: var(--text-muted); font-size: 13px; margin-top: 24px; }
+a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <h1>Who has the ball?</h1>
+  <p class="sub">Possession from a football match video, worked out in your browser. The video stays on your computer: nothing is uploaded.</p>
+  <p class="ar" lang="ar">تحليل الاستحواذ من فيديو المباراة داخل متصفحك: اختر الفيديو ثم اضغط Analyse. لا يُرفع الفيديو إلى أي خادم، بل يبقى على جهازك. يمكنك كتابة الفريقين بالعربية، مثل: الزمالك=أبيض، الأهلي=أحمر.</p>
+
+  <section class="card">
+    <h2>Choose a match video</h2>
+    <p class="note">MP4 works best. A few minutes of video take a few minutes to analyse on a recent laptop; a full match takes much longer, so try a clip first and keep this tab open while it runs.</p>
+    <input type="file" id="file" accept="video/*" aria-label="Match video">
+    <p class="note" id="file-info" style="margin-top:8px"></p>
+    <div class="row">
+      <label class="field">Teams and shirt colours (optional)
+        <input type="text" id="teams" dir="auto" placeholder="Zamalek=white, Al Ahly=red" autocomplete="off"></label>
+      <label class="field">From (m:ss)<input type="text" id="from" placeholder="0:00" autocomplete="off"></label>
+      <label class="field">To (m:ss)<input type="text" id="to" placeholder="end" autocomplete="off"></label>
+    </div>
+    <div class="row" style="margin-bottom:0">
+      <button class="primary" id="go" disabled>Analyse</button>
+      <button id="stop" hidden>Stop and show what is done</button>
+    </div>
+    <div class="progress" id="progress" hidden role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Analysis progress"><div></div></div>
+    <p id="status" aria-live="polite"></p>
+    <p id="error" hidden></p>
+  </section>
+
+  <section class="card" id="player-card" hidden>
+    <h2>The video, marked</h2>
+    <p class="note">A ring at each player's feet shows his team; the triangle is the ball, filled with the colour of the team that has it.</p>
+    <div class="player" id="player-box">
+      <video id="player" controls playsinline controlslist="nofullscreen"></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div class="player-bar">
+      <span class="note" style="margin:0">Marks appear for the stretch that was analysed.</span>
+      <button id="full">Full screen</button>
+    </div>
+  </section>
+
+  <div id="report" hidden>
+    <p class="sub" id="report-sub"></p>
+    <div class="warn" id="warn" hidden></div>
+
+    <section class="card">
+      <h2>Possession</h2>
+      <p class="note">Share of the time either team had the ball. Time with nobody on the ball is left out. Chart colours mark the teams; the shirt colours are in the table below.</p>
+      <div class="split" id="split" role="img"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="card">
+      <h2>When each team had the ball</h2>
+      <p class="note">Each block is one spell of possession. Gaps are moments with nobody on the ball, or the ball out of view.</p>
+      <div class="chart" id="timeline" role="img"></div>
+      <details><summary>Table view: every spell</summary><div class="scroll"><table id="spells-table"></table></div></details>
+    </section>
+
+    <section class="card" id="blocks-card" hidden>
+      <h2>Possession over the match</h2>
+      <p class="note" id="blocks-note"></p>
+      <div class="legend" id="legend2" style="margin-bottom:8px"></div>
+      <div class="chart" id="blocks" role="img"></div>
+      <details><summary>Table view</summary><table id="blocks-table"></table></details>
+    </section>
+
+    <section class="card">
+      <h2>Numbers</h2>
+      <table id="stats"></table>
+      <div class="downloads" style="margin-top:14px">
+        <button id="dl-csv">Download possession.csv</button>
+        <button id="dl-json">Download summary.json</button>
+      </div>
+    </section>
+
+    <section class="card method">
+      <h2>How this was measured</h2>
+      <p>Five times a second, a detector found the players and the ball in the picture. Players were split into two teams by shirt colour; the team whose nearest player was closest to the ball, measured in player heights, got that moment, and a hidden Markov model smoothed the sequence so a single frame cannot flip possession.</p>
+      <ul id="quality"></ul>
+      <p style="margin-top:8px">Limits: these numbers have not been checked against an event log yet, so read them as a first estimate. Distances are measured in the picture, so a ball passing in front of a player can count as near him. Goalkeepers and referees are never given the ball; while a keeper holds it, possession stays with the last team seen on it. Replays and close-ups count as time with nobody on the ball only when the grass leaves the picture.</p>
+    </section>
+  </div>
+
+  <footer>
+    Method and code: <a href="https://github.com/amr7772/possession-from-tracking">github.com/amr7772/possession-from-tracking</a>.
+    The same project on tracking data: <a href="https://huggingface.co/spaces/amreleraqi09/possession-from-tracking">the replay</a>.
+    The detector is YOLO26s by Ultralytics (AGPL-3.0), run with ONNX Runtime Web.
+  </footer>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/ort.webgpu.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ------------------------------------------------------------------ settings
+  const MODEL_URL = 'https://raw.githubusercontent.com/amr7772/possession-from-tracking/main/models/detector/yolo26s-736x1280.onnx';
+  const MODEL_MB = 38.5;
+  const IN_W = 1280, IN_H = 736;                // detector input, letterboxed
+  const HZ = 5;                                 // frames looked at per second of video
+  const PERSON_MIN_CONF = 0.30, BALL_MIN_CONF = 0.05;
+  const NO_VIEW_SHARE = 0.20, TAU = 0.6, FLOOR = 0.1, LONG_GAP_S = 2.0;
+  const LOST_BALL = [0.15, 0.15, 0.7], NO_VIEW = [0.05, 0.05, 0.9];
+  const COCO_PERSON = 0, COCO_BALL = 32;
+  const TEAM_A = 0, TEAM_B = 1, NONE = 2, OTHER = -1;
+  const STATE_NAMES = ['team_a', 'team_b', 'none'];
+  const MASK_W = 320;
+  // Hidden Markov model of the tracking-data model (models/config.json in the repository)
+  const SMOOTHER = {
+    prior: [0.2927679042759106, 0.2808375857821573, 0.42639450994193207],
+    transition: [[0.9884643114635905, 0.008231194424417207, 0.0033044941119923094],
+                 [0.008455467869222097, 0.9887260428410372, 0.002818489289740699],
+                 [0.0022433879093198992, 0.0016530226700251888, 0.9961035894206549]],
+    alpha: 1.0, stickiness: 2,
+  };
+
+  const $ = id => document.getElementById(id);
+  const fileInput = $('file'), goBtn = $('go'), stopBtn = $('stop');
+  const statusEl = $('status'), errorEl = $('error'), progress = $('progress');
+  const player = $('player'), overlay = $('overlay');
+  let videoURL = null, videoMeta = null, running = false, cancelled = false, session = null, backend = '';
+  let R = null;                                  // the last result: samples, states, teams, summary
+
+  // ------------------------------------------------------------------ small helpers
+  const clockOf = s => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60), r = s % 60; return m + ':' + String(r).padStart(2, '0'); };
+  function parseClock(text, fallback) {
+    text = (text || '').trim();
+    if (!text) return fallback;
+    const parts = text.split(':').map(Number);
+    if (parts.some(isNaN)) return NaN;
+    return parts.reduce((acc, v) => acc * 60 + v, 0);
+  }
+  function showError(msg) { errorEl.hidden = !msg; errorEl.textContent = msg || ''; }
+  function setProgress(frac, text) {
+    progress.hidden = false;
+    progress.firstElementChild.style.width = (100 * Math.max(0, Math.min(1, frac))).toFixed(1) + '%';
+    progress.setAttribute('aria-valuenow', String(Math.round(100 * frac)));
+    if (text != null) statusEl.textContent = text;
+  }
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function median(arr) { if (!arr.length) return NaN; const a = Float64Array.from(arr).sort(); const m = a.length >> 1;
+    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+
+  // ------------------------------------------------------------------ colour
+  const LIN = new Float64Array(256);
+  for (let i = 0; i < 256; i++) { const c = i / 255; LIN[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  const XN = 0.950456, ZN = 1.088754;
+  const fLab = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  function labCV(r, g, b) {                     // OpenCV's 8-bit Lab: L*2.55, a+128, b+128
+    const R_ = LIN[r], G_ = LIN[g], B_ = LIN[b];
+    const X = (0.412453 * R_ + 0.357580 * G_ + 0.180423 * B_) / XN;
+    const Y = 0.212671 * R_ + 0.715160 * G_ + 0.072169 * B_;
+    const Z = (0.019334 * R_ + 0.119193 * G_ + 0.950227 * B_) / ZN;
+    const fx = fLab(X), fy = fLab(Y), fz = fLab(Z);
+    const L = Y > 0.008856 ? 116 * fy - 16 : 903.3 * Y;
+    return [Math.round(L * 2.55), Math.round(500 * (fx - fy) + 128), Math.round(200 * (fy - fz) + 128)];
+  }
+  function labCVToHex(lab) {
+    const L = Math.min(255, Math.max(0, Math.round(lab[0]))) / 2.55, a = Math.round(lab[1]) - 128, b = Math.round(lab[2]) - 128;
+    const fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+    const inv = f => { const f3 = f * f * f; return f3 > 0.008856 ? f3 : (f - 16 / 116) / 7.787; };
+    const X = inv(fx) * XN, Y = L > 8 ? fy * fy * fy : L / 903.3, Z = inv(fz) * ZN;
+    const lin = [3.240479 * X - 1.537150 * Y - 0.498535 * Z, -0.969256 * X + 1.875992 * Y + 0.041556 * Z,
+                 0.055648 * X - 0.204043 * Y + 1.057311 * Z];
+    return '#' + lin.map(c => { c = Math.min(1, Math.max(0, c));
+      return Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)).toString(16).padStart(2, '0'); }).join('');
+  }
+  function stdLab(hex) {                        // CIE Lab (D65), for matching shirt colours to words
+    const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const lin = rgb.map(c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+    let x = 0.4124 * lin[0] + 0.3576 * lin[1] + 0.1805 * lin[2];
+    let y = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+    let z = 0.0193 * lin[0] + 0.1192 * lin[1] + 0.9505 * lin[2];
+    x /= 0.95047; z /= 1.08883;
+    const f = [x, y, z].map(v => v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116);
+    return [116 * f[1] - 16, 500 * (f[0] - f[1]), 200 * (f[1] - f[2])];
+  }
+  const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+  function colourName(hex) {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const hi = Math.max(r, g, b), lo = Math.min(r, g, b), sat = hi === 0 ? 0 : (hi - lo) / hi;
+    if (hi < 0.25) return 'black';
+    if (sat < 0.18) return hi > 0.7 ? 'white' : 'grey';
+    let hue;
+    if (hi === r) hue = ((60 * ((g - b) / (hi - lo))) % 360 + 360) % 360;
+    else if (hi === g) hue = 60 * ((b - r) / (hi - lo)) + 120;
+    else hue = 60 * ((r - g) / (hi - lo)) + 240;
+    for (const [limit, name] of [[15, 'red'], [40, 'orange'], [65, 'yellow'], [165, 'green'], [195, 'cyan'],
+                                  [255, 'blue'], [290, 'purple'], [335, 'pink'], [360, 'red']]) if (hue < limit) return name;
+    return 'red';
+  }
+  const COLOUR_WORDS = {
+    white: '#f2f2f2', black: '#151515', grey: '#808080', gray: '#808080', silver: '#c0c0c0',
+    red: '#d0202e', maroon: '#7a1f2b', claret: '#7a1f3d', orange: '#f08a24', yellow: '#f5d90a',
+    gold: '#d4a72c', green: '#2e9e44', lime: '#a6e22e', cyan: '#33c3e0', sky: '#6ab7e8',
+    blue: '#1f4fbf', navy: '#1b2a4e', purple: '#6f3a9a', violet: '#7f3fbf', pink: '#f06ba8', brown: '#7b4a2a',
+  };
+  const ARABIC_COLOURS = {
+    'أبيض': 'white', 'ابيض': 'white', 'أسود': 'black', 'اسود': 'black', 'رمادي': 'grey', 'رصاصي': 'grey', 'فضي': 'silver',
+    'أحمر': 'red', 'احمر': 'red', 'نبيتي': 'maroon', 'عنابي': 'claret', 'برتقالي': 'orange', 'أصفر': 'yellow', 'اصفر': 'yellow',
+    'ذهبي': 'gold', 'أخضر': 'green', 'اخضر': 'green', 'فسفوري': 'lime', 'سماوي': 'sky', 'لبني': 'sky',
+    'أزرق': 'blue', 'ازرق': 'blue', 'كحلي': 'navy', 'بنفسجي': 'purple', 'موف': 'violet', 'وردي': 'pink', 'بمبي': 'pink', 'بني': 'brown',
+  };
+  function parseTeams(spec) {
+    if (!spec || !spec.trim()) return null;
+    const parts = spec.split(/[,،]/).map(p => p.trim()).filter(Boolean);
+    if (parts.length !== 2) throw new Error('Give two teams, for example "Zamalek=white, Al Ahly=red" or "الزمالك=أبيض، الأهلي=أحمر".');
+    return parts.map(part => {
+      const at = part.indexOf('=');
+      const name = (at < 0 ? part : part.slice(0, at)).trim();
+      let colour = at < 0 ? null : (part.slice(at + 1).trim().toLowerCase() || null);
+      if (colour && ARABIC_COLOURS[colour]) colour = ARABIC_COLOURS[colour];
+      if (colour && !COLOUR_WORDS[colour] && !/^#[0-9a-f]{6}$/.test(colour))
+        throw new Error('Unknown colour "' + colour + '". Use a word (' + Object.keys(COLOUR_WORDS).join(', ') + ') or a hex code such as #ffffff.');
+      return [name, colour];
+    });
+  }
+  function matchNames(seenHex, teams) {
+    if (teams.some(t => !t[1])) return teams.map(t => t[0]);
+    const ref = teams.map(t => stdLab(COLOUR_WORDS[t[1]] || t[1])), seen = seenHex.map(stdLab);
+    const keep = dist(seen[0], ref[0]) + dist(seen[1], ref[1]), swap = dist(seen[0], ref[1]) + dist(seen[1], ref[0]);
+    return keep <= swap ? [teams[0][0], teams[1][0]] : [teams[1][0], teams[0][0]];
+  }
+
+  // ------------------------------------------------------------------ pitch mask
+  function dilate(src, w, h, r) {               // square kernel; outside the image counts as empty
+    const tmp = new Uint8Array(w * h), out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = 0; for (let k = Math.max(0, x - r), e = Math.min(w - 1, x + r); k <= e; k++) if (src[y * w + k]) { m = 1; break; }
+      tmp[y * w + x] = m;
+    }
+    for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) {
+      let m = 0; for (let k = Math.max(0, y - r), e = Math.min(h - 1, y + r); k <= e; k++) if (tmp[k * w + x]) { m = 1; break; }
+      out[y * w + x] = m;
+    }
+    return out;
+  }
+  function erode(src, w, h, r) {                // outside the image counts as full, as in OpenCV
+    const tmp = new Uint8Array(w * h), out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = 1; for (let k = Math.max(0, x - r), e = Math.min(w - 1, x + r); k <= e; k++) if (!src[y * w + k]) { m = 0; break; }
+      tmp[y * w + x] = m;
+    }
+    for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) {
+      let m = 1; for (let k = Math.max(0, y - r), e = Math.min(h - 1, y + r); k <= e; k++) if (!tmp[k * w + x]) { m = 0; break; }
+      out[y * w + x] = m;
+    }
+    return out;
+  }
+  function largestComponent(m, w, h) {
+    const label = new Int32Array(w * h), stack = new Int32Array(w * h);
+    let next = 0, best = 0, bestSize = 0;
+    for (let i = 0; i < w * h; i++) {
+      if (!m[i] || label[i]) continue;
+      next++; let sp = 0, size = 0; stack[sp++] = i; label[i] = next;
+      while (sp) {
+        const p = stack[--sp]; size++; const x = p % w, y = (p - x) / w;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue; const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const q = ny * w + nx; if (m[q] && !label[q]) { label[q] = next; stack[sp++] = q; }
+        }
+      }
+      if (size > bestSize) { bestSize = size; best = next; }
+    }
+    if (!best) return null;
+    const out = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) out[i] = label[i] === best ? 1 : 0;
+    return out;
+  }
+  function fillHoles(m, w, h) {                 // everything the outside cannot reach belongs to the pitch
+    const reach = new Uint8Array(w * h), stack = new Int32Array(w * h); let sp = 0;
+    const push = p => { if (!m[p] && !reach[p]) { reach[p] = 1; stack[sp++] = p; } };
+    for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+    while (sp) { const p = stack[--sp], x = p % w, y = (p - x) / w;
+      if (x > 0) push(p - 1); if (x < w - 1) push(p + 1); if (y > 0) push(p - w); if (y < h - 1) push(p + w); }
+    const out = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) out[i] = reach[i] ? 0 : 1;
+    return out;
+  }
+  function histMedian(hist, n) {
+    if (!n) return 0;
+    const lo = Math.floor((n - 1) / 2), hi = Math.floor(n / 2); let acc = 0, a = null, b = null;
+    for (let v = 0; v < 256; v++) { acc += hist[v]; if (a === null && acc > lo) a = v; if (acc > hi) { b = v; break; } }
+    return (a + b) / 2;
+  }
+  function pitchMask(px, w, h) {               // px: RGBA of a small copy of the frame
+    const n = w * h, green = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const r = px[4 * i], g = px[4 * i + 1], b = px[4 * i + 2];
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+      const s = mx === 0 ? 0 : d * 255 / mx;
+      let hue = 0;
+      if (d) { hue = mx === r ? 60 * (g - b) / d : mx === g ? 120 + 60 * (b - r) / d : 240 + 60 * (r - g) / d; if (hue < 0) hue += 360; }
+      const hcv = hue / 2;
+      green[i] = hcv >= 30 && hcv <= 90 && s >= 40 && mx >= 40 ? 1 : 0;
+    }
+    const comp = largestComponent(erode(dilate(green, w, h, 7), w, h, 7), w, h);
+    if (!comp) return {mask: new Uint8Array(n), w, h, share: 0, grass: [0, 0, 0]};
+    const mask = dilate(fillHoles(comp, w, h), w, h, 3);
+    let on = 0; const hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)]; let cnt = 0;
+    for (let i = 0; i < n; i++) {
+      if (!mask[i]) continue; on++;
+      if (!green[i]) continue;
+      const lab = labCV(px[4 * i], px[4 * i + 1], px[4 * i + 2]);
+      hist[0][lab[0]]++; hist[1][Math.min(255, Math.max(0, lab[1]))]++; hist[2][Math.min(255, Math.max(0, lab[2]))]++; cnt++;
+    }
+    return {mask, w, h, share: on / n, grass: hist.map(hh => histMedian(hh, cnt))};
+  }
+  const onMask = (pm, scale, x, y) => { const mx = Math.trunc(x * scale), my = Math.trunc(y * scale);
+    return mx >= 0 && mx < pm.w && my >= 0 && my < pm.h && pm.mask[my * pm.w + mx] > 0; };
+
+  // ------------------------------------------------------------------ detection
+  async function loadModel() {
+    if (session) return session;
+    let bytes = null, cache = null;
+    try { cache = await caches.open('who-has-the-ball-v1'); const hit = await cache.match(MODEL_URL); if (hit) bytes = new Uint8Array(await hit.arrayBuffer()); }
+    catch (e) { cache = null; }
+    if (!bytes) {
+      const res = await fetch(MODEL_URL);
+      if (!res.ok) throw new Error('Could not download the detector (' + res.status + ').');
+      let total = Number(res.headers.get('content-length')) || MODEL_MB * 1e6;
+      const reader = res.body.getReader(); const chunks = []; let got = 0;
+      for (;;) { const {done, value} = await reader.read(); if (done) break; chunks.push(value); got += value.length; total = Math.max(total, got);
+        setProgress(got / total * 0.1, 'Downloading the detector: ' + (got / 1e6).toFixed(0) + ' of ' + (total / 1e6).toFixed(0) + ' MB (only the first time)'); }
+      bytes = new Uint8Array(got); let off = 0; for (const c of chunks) { bytes.set(c, off); off += c.length; }
+      if (cache) { try { await cache.put(MODEL_URL, new Response(bytes, {headers: {'content-type': 'application/octet-stream'}})); } catch (e) { /* storage full or blocked */ } }
+    }
+    setProgress(0.1, 'Starting the detector...');
+    ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1;
+    if (navigator.gpu) {
+      try { session = await ort.InferenceSession.create(bytes, {executionProviders: ['webgpu'], graphOptimizationLevel: 'all'}); backend = 'WebGPU'; }
+      catch (e) { console.warn('WebGPU failed, falling back to WASM', e); session = null; }
+    }
+    if (!session) { session = await ort.InferenceSession.create(bytes, {executionProviders: ['wasm']}); backend = 'WASM'; }
+    return session;
+  }
+
+  function seek(video, t) {
+    return new Promise((resolve, reject) => {
+      const ok = () => { cleanup(); resolve(); }, bad = () => { cleanup(); reject(new Error('The browser could not read this video.')); };
+      const cleanup = () => { video.removeEventListener('seeked', ok); video.removeEventListener('error', bad); };
+      if (Math.abs(video.currentTime - t) < 1e-4 && video.readyState >= 2) { resolve(); return; }
+      video.addEventListener('seeked', ok); video.addEventListener('error', bad);
+      video.currentTime = t;
+    });
+  }
+
+  function shirtColour(px, lb, box, grass) {   // px: RGBA of the letterboxed frame; lb: its geometry
+    const x1 = box[0] * lb.r + lb.left, y1 = box[1] * lb.r + lb.top, x2 = box[2] * lb.r + lb.left, y2 = box[3] * lb.r + lb.top;
+    const w = x2 - x1, h = y2 - y1;
+    const xa = Math.max(0, Math.trunc(x1 + 0.25 * w)), xb = Math.min(IN_W, Math.ceil(x2 - 0.25 * w));
+    const ya = Math.max(0, Math.trunc(y1 + 0.15 * h)), yb = Math.min(IN_H, Math.ceil(y1 + 0.50 * h));
+    if (xb <= xa || yb <= ya) return null;
+    const all = [[], [], []], far = [[], [], []];
+    for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) {
+      const j = 4 * (y * IN_W + x); const lab = labCV(px[j], px[j + 1], px[j + 2]);
+      for (let c = 0; c < 3; c++) all[c].push(lab[c]);
+      if (dist(lab, grass) > 20) for (let c = 0; c < 3; c++) far[c].push(lab[c]);
+    }
+    const use = far[0].length >= Math.max(4, 0.2 * all[0].length) ? far : all;
+    return use.map(median);
+  }
+
+  async function detectAll(video, t0, t1, onStep) {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const r = Math.min(IN_W / vw, IN_H / vh), nw = Math.round(vw * r), nh = Math.round(vh * r);
+    const lb = {r, left: Math.round((IN_W - nw) / 2 - 0.1), top: Math.round((IN_H - nh) / 2 - 0.1)};
+    const big = document.createElement('canvas'); big.width = IN_W; big.height = IN_H;
+    const bctx = big.getContext('2d', {willReadFrequently: true});
+    bctx.fillStyle = 'rgb(114,114,114)'; bctx.fillRect(0, 0, IN_W, IN_H);
+    const sw = MASK_W, sh = Math.max(1, Math.round(vh * MASK_W / vw)), scale = sw / vw;
+    const small = document.createElement('canvas'); small.width = sw; small.height = sh;
+    const sctx = small.getContext('2d', {willReadFrequently: true}); sctx.imageSmoothingQuality = 'high';
+    const input = new Float32Array(3 * IN_W * IN_H), plane = IN_W * IN_H;
+    const n = Math.max(1, Math.floor((t1 - t0) * HZ + 1e-9));
+    const samples = [], started = performance.now();
+    for (let k = 0; k < n; k++) {
+      if (cancelled) break;
+      const t = t0 + k / HZ;
+      await seek(video, Math.min(t + 0.001, Math.max(0, video.duration - 0.001)));
+      bctx.drawImage(video, lb.left, lb.top, nw, nh);
+      sctx.drawImage(video, 0, 0, sw, sh);
+      const px = bctx.getImageData(0, 0, IN_W, IN_H).data;
+      for (let i = 0, j = 0; i < plane; i++, j += 4) { input[i] = px[j] / 255; input[plane + i] = px[j + 1] / 255; input[2 * plane + i] = px[j + 2] / 255; }
+      const out = await session.run({images: new ort.Tensor('float32', input, [1, 3, IN_H, IN_W])});
+      const det = out[session.outputNames[0]].data;
+      const pm = pitchMask(sctx.getImageData(0, 0, sw, sh).data, sw, sh);
+      const s = {t, share: pm.share, people: [], ball: null, ballConf: 0};
+      let best = -1;
+      for (let q = 0; q < det.length / 6; q++) {
+        const conf = det[6 * q + 4]; if (conf < BALL_MIN_CONF) continue;
+        const cls = Math.round(det[6 * q + 5]);
+        const box = [(det[6 * q] - lb.left) / r, (det[6 * q + 1] - lb.top) / r, (det[6 * q + 2] - lb.left) / r, (det[6 * q + 3] - lb.top) / r];
+        if (cls === COCO_PERSON) {
+          if (conf < PERSON_MIN_CONF || !onMask(pm, scale, (box[0] + box[2]) / 2, box[3])) continue;
+          s.people.push({box, conf, kind: 'person', colour: shirtColour(px, lb, box, pm.grass), team: OTHER});
+        } else if (cls === COCO_BALL && conf > best) {
+          const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+          if (onMask(pm, scale, cx, cy)) { best = conf; s.ball = [cx, cy]; s.ballConf = conf; }
+        }
+      }
+      samples.push(s);
+      const el = (performance.now() - started) / 1000, left = el / (k + 1) * (n - k - 1);
+      onStep(k + 1, n, t, left);
+    }
+    return samples;
+  }
+
+  // ------------------------------------------------------------------ teams
+  const weighted = c => [c[0] * 0.5, c[1], c[2]];
+  function kmeans(X, k, seed, nInit) {
+    const rng = mulberry32(seed + 1); let best = null; const n = X.length;
+    const d2 = (p, q) => (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
+    for (let run = 0; run < nInit; run++) {
+      const C = [X[Math.floor(rng() * n)].slice()], md = new Float64Array(n).fill(Infinity);
+      while (C.length < k) {
+        const c = C[C.length - 1]; let sum = 0;
+        for (let i = 0; i < n; i++) { const d = d2(X[i], c); if (d < md[i]) md[i] = d; sum += md[i]; }
+        let r = rng() * sum, idx = 0; for (; idx < n - 1; idx++) { r -= md[idx]; if (r <= 0) break; }
+        C.push(X[idx].slice());
+      }
+      const lab = new Int32Array(n).fill(-1);
+      for (let it = 0; it < 100; it++) {
+        let moved = 0;
+        for (let i = 0; i < n; i++) { let bj = 0, bd = Infinity; for (let j = 0; j < k; j++) { const d = d2(X[i], C[j]); if (d < bd) { bd = d; bj = j; } }
+          if (lab[i] !== bj) { lab[i] = bj; moved++; } }
+        const sums = Array.from({length: k}, () => [0, 0, 0, 0]);
+        for (let i = 0; i < n; i++) { const s = sums[lab[i]]; s[0] += X[i][0]; s[1] += X[i][1]; s[2] += X[i][2]; s[3]++; }
+        for (let j = 0; j < k; j++) if (sums[j][3]) C[j] = [sums[j][0] / sums[j][3], sums[j][1] / sums[j][3], sums[j][2] / sums[j][3]];
+        if (!moved) break;
+      }
+      let inertia = 0; for (let i = 0; i < n; i++) inertia += d2(X[i], C[lab[i]]);
+      if (!best || inertia < best.inertia) best = {C, lab: lab.slice(), inertia};
+    }
+    return best;
+  }
+  function fitTeams(samples, given, merge = 32) {
+    let pool = [];
+    for (const s of samples) for (const p of s.people) if (p.colour && (p.kind === 'player' || p.kind === 'person')) pool.push(p.colour);
+    if (pool.length < 20) throw new Error('Too few players were found to tell the teams apart. Is this a match video with the pitch in view?');
+    if (pool.length > 20000) { const rng = mulberry32(7); pool = Array.from({length: 20000}, () => pool[Math.floor(rng() * pool.length)]); }
+    const X = pool.map(weighted), k = Math.min(8, Math.floor(X.length / 5));
+    const km = kmeans(X, k, 0, 10), centres = km.C, sizes = new Array(k).fill(0);
+    for (const l of km.lab) sizes[l]++;
+    // Join colour modes closest first, comparing the mean colour of each joined group, so that
+    // small steps (white, grey, black) cannot chain a white kit to the referee and staff.
+    const members = centres.map((_, i) => [i]);
+    const meanOf = g => { let w = 0; const c = [0, 0, 0];
+      for (const i of g) { w += sizes[i]; for (let q = 0; q < 3; q++) c[q] += centres[i][q] * sizes[i]; }
+      return c.map(v => v / Math.max(1, w)); };
+    while (members.length > 1) {
+      let best = null;
+      for (let a = 0; a < members.length; a++) for (let b = a + 1; b < members.length; b++) {
+        const d = dist(meanOf(members[a]), meanOf(members[b])); if (!best || d < best[0]) best = [d, a, b]; }
+      if (best[0] >= merge) break;
+      members[best[1]] = members[best[1]].concat(members.splice(best[2], 1)[0]);
+    }
+    const roots = new Array(k); members.forEach((m, g) => m.forEach(i => { roots[i] = g; }));
+    const groupSize = {};
+    roots.forEach((r, i) => { groupSize[r] = (groupSize[r] || 0) + sizes[i]; });
+    const ranked = Object.keys(groupSize).map(Number).sort((a, b) => groupSize[b] - groupSize[a]);
+    if (ranked.length < 2) throw new Error('All shirts look alike; the players cannot be split into two teams.');
+    let teamRoots = ranked.slice(0, 2);
+    const meanLab = r => { let w = 0; const c = [0, 0, 0];
+      roots.forEach((rr, i) => { if (rr !== r) return; w += sizes[i]; for (let q = 0; q < 3; q++) c[q] += centres[i][q] * sizes[i]; });
+      return [c[0] / w / 0.5, c[1] / w, c[2] / w]; };
+    let teamLab = teamRoots.map(meanLab);
+    if (teamLab[1][0] > teamLab[0][0]) { teamRoots = teamRoots.reverse(); teamLab = teamLab.reverse(); }
+    const groups = roots.map(r => r === teamRoots[0] ? TEAM_A : r === teamRoots[1] ? TEAM_B : OTHER);
+    const colours = teamLab.map(labCVToHex);
+    let names;
+    if (given) names = matchNames(colours, given);
+    else { const a = colourName(colours[0]), b = colourName(colours[1]);
+      names = a !== b ? [a[0].toUpperCase() + a.slice(1) + ' team', b[0].toUpperCase() + b.slice(1) + ' team'] : ['Team A', 'Team B']; }
+    const gap = dist(weighted(teamLab[0]), weighted(teamLab[1])), small = groupSize[teamRoots[1]] / Math.max(1, groupSize[teamRoots[0]]);
+    let warning = '';
+    if (gap < 1.5 * merge) warning = 'The two kits are close in colour; check the team rings in the marked video.';
+    else if (small < 0.35) warning = 'One team was seen far less than the other; check the team rings in the marked video.';
+    return {centres, groups, colours, names, warning,
+      assign(colour) { if (!colour) return OTHER; const w = weighted(colour); let bj = 0, bd = Infinity;
+        centres.forEach((c, j) => { const d = dist(c, w); if (d < bd) { bd = d; bj = j; } }); return groups[bj]; }};
+  }
+
+  // ------------------------------------------------------------------ ball and possession
+  function cleanBall(samples, width, maxGapS = 1.0, jump = 0.12) {
+    const n = samples.length, pos = samples.map(s => s.ball && s.share >= NO_VIEW_SHARE ? s.ball.slice() : null);
+    const limit = jump * width, d = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+    let seen = []; pos.forEach((p, i) => { if (p) seen.push(i); });
+    for (let q = 0; q + 2 < seen.length; q++) {
+      const a = seen[q], b = seen[q + 1], c = seen[q + 2];
+      if (c - a <= 4 && pos[a] && pos[c]) {
+        if (pos[b] && d(pos[b], pos[a]) > limit && d(pos[c], pos[b]) > limit && d(pos[c], pos[a]) < limit) pos[b] = null;
+      }
+    }
+    const source = pos.map(p => p ? 1 : 0);
+    seen = []; source.forEach((s, i) => { if (s === 1) seen.push(i); });
+    const maxGap = Math.max(1, Math.round(maxGapS * HZ));
+    for (let q = 0; q + 1 < seen.length; q++) {
+      const a = seen[q], b = seen[q + 1];
+      if (b - a > 1 && b - a <= maxGap + 1) for (let i = a + 1; i < b; i++) {
+        const w = (i - a) / (b - a); pos[i] = [pos[a][0] + w * (pos[b][0] - pos[a][0]), pos[a][1] + w * (pos[b][1] - pos[a][1])]; source[i] = 2;
+      }
+    }
+    return {pos, source};
+  }
+  function rectDistance(x, y, box) { const dx = Math.max(box[0] - x, 0, x - box[2]), dy = Math.max(box[1] - y, 0, y - box[3]); return Math.hypot(dx, dy); }
+  function teamDistances(ball, people) {
+    const best = [Infinity, Infinity];
+    for (const p of people) if (p.team === TEAM_A || p.team === TEAM_B) {
+      const h = Math.max(1, p.box[3] - p.box[1]); best[p.team] = Math.min(best[p.team], rectDistance(ball[0], ball[1], p.box) / h); }
+    return best;
+  }
+  function emission(dA, dB, prior) {
+    const none = FLOOR * prior[2] / prior[0];
+    const s = [FLOOR + Math.exp(-((dA / TAU) ** 2)), FLOOR + Math.exp(-((dB / TAU) ** 2)), none], sum = s[0] + s[1] + s[2];
+    return s.map(v => v / sum);
+  }
+  function smootherParams() {
+    const tr = SMOOTHER.transition, pr = SMOOTHER.prior, t = tr.map(r => r.slice());
+    t[0][0] = t[1][1] = (tr[0][0] + tr[1][1]) / 2; t[0][1] = t[1][0] = (tr[0][1] + tr[1][0]) / 2;
+    t[0][2] = t[1][2] = (tr[0][2] + tr[1][2]) / 2; t[2][0] = t[2][1] = (tr[2][0] + tr[2][1]) / 2;
+    const norm = t.map(r => { const s = r[0] + r[1] + r[2]; return r.map(v => v / s); });
+    const sticky = norm.map((r, i) => { const off = r.map((v, j) => i === j ? 0 : v / SMOOTHER.stickiness); const o = off[0] + off[1] + off[2]; off[i] = 1 - o; return off; });
+    const p = [(pr[0] + pr[1]) / 2, (pr[0] + pr[1]) / 2, pr[2]], ps = p[0] + p[1] + p[2];
+    return {prior: p.map(v => v / ps), trans: sticky, alpha: SMOOTHER.alpha};
+  }
+  function viterbi(logEm, logTrans, logStart) {
+    const n = logEm.length; if (!n) return [];
+    let score = [0, 1, 2].map(j => logStart[j] + logEm[0][j]); const back = new Int8Array(n * 3);
+    for (let t = 1; t < n; t++) {
+      const next = [0, 0, 0];
+      for (let j = 0; j < 3; j++) { let bi = 0, bv = -Infinity; for (let i = 0; i < 3; i++) { const v = score[i] + logTrans[i][j]; if (v > bv) { bv = v; bi = i; } }
+        back[t * 3 + j] = bi; next[j] = bv + logEm[t][j]; }
+      score = next;
+    }
+    const path = new Array(n); let s = 0; for (let j = 1; j < 3; j++) if (score[j] > score[s]) s = j; path[n - 1] = s;
+    for (let t = n - 1; t > 0; t--) path[t - 1] = back[t * 3 + path[t]];
+    return path;
+  }
+  function possession(samples, pos) {
+    const {prior, trans, alpha} = smootherParams(), step = 1 / HZ, n = samples.length;
+    const gaps = new Float64Array(n);
+    for (let i = 0; i < n;) { if (pos[i]) { i++; continue; } let j = i; while (j < n && !pos[j]) j++; for (let q = i; q < j; q++) gaps[q] = (j - i) * step; i = j; }
+    const proba = samples.map((s, i) => {
+      if (s.share < NO_VIEW_SHARE) return NO_VIEW.slice();
+      if (!pos[i]) return gaps[i] > LONG_GAP_S ? LOST_BALL.slice() : prior.slice();
+      const [dA, dB] = teamDistances(pos[i], s.people); return emission(dA, dB, prior);
+    });
+    const logPrior = prior.map(Math.log);
+    const logEm = proba.map(p => p.map((v, j) => alpha * (Math.log(Math.min(1, Math.max(1e-6, v))) - logPrior[j])));
+    const states = viterbi(logEm, trans.map(r => r.map(Math.log)), logPrior);
+    return {proba, states};
+  }
+  function spells(states, times, step) {
+    const out = []; if (!states.length) return out; let start = 0;
+    for (let i = 1; i <= states.length; i++) if (i === states.length || states[i] !== states[start]) {
+      out.push({state: STATE_NAMES[states[start]], start: times[start], end: times[i - 1] + step, seconds: times[i - 1] + step - times[start]}); start = i; }
+    return out;
+  }
+  function summarise(samples, states, source, teams, fileName, meta) {
+    const times = samples.map(s => s.t), step = 1 / HZ, runs = spells(states, times, step);
+    const secs = [TEAM_A, TEAM_B, NONE].map(k => states.filter(s => s === k).length * step), held = secs[0] + secs[1];
+    const share = held ? [secs[0] / held, secs[1] / held] : [0, 0], teamRuns = runs.filter(r => r.state !== 'none');
+    const span = times.length ? times[times.length - 1] - times[0] + step : 0;
+    const block = [10, 30, 60, 300, 900].find(b => span / b <= 12) || 900, blocks = [];
+    const stop = times.length ? times[times.length - 1] + step : 0;
+    for (let j = 0; times.length && times[0] + j * block < stop - 1e-9; j++) {
+      const b0 = times[0] + j * block; let a = 0, bb = 0;
+      times.forEach((t, i) => { if (t >= b0 && t < b0 + block) { if (states[i] === TEAM_A) a++; else if (states[i] === TEAM_B) bb++; } });
+      blocks.push({start: b0, end: Math.min(b0 + block, stop), team_a: a + bb ? a / (a + bb) : null, team_b: a + bb ? bb / (a + bb) : null});
+    }
+    return {
+      video: fileName, duration_seconds: span, frames_analysed: samples.length, rate_hz: HZ,
+      detector: 'YOLO26s (ONNX, ' + backend + ')',
+      teams: [TEAM_A, TEAM_B].map(k => ({name: teams.names[k], colour: teams.colours[k], possession: share[k], seconds_on_ball: secs[k],
+        spells: teamRuns.filter(r => r.state === STATE_NAMES[k]).length,
+        longest_spell_seconds: Math.max(0, ...teamRuns.filter(r => r.state === STATE_NAMES[k]).map(r => r.seconds))})),
+      seconds_no_possession: secs[2],
+      ball_seen_share: source.length ? source.filter(s => s === 1).length / source.length : 0,
+      ball_filled_share: source.length ? source.filter(s => s === 2).length / source.length : 0,
+      no_pitch_view_share: samples.length ? samples.filter(s => s.share < NO_VIEW_SHARE).length / samples.length : 0,
+      block_seconds: block, blocks, spells: runs, warning: teams.warning, video_size: [meta.width, meta.height],
+    };
+  }
+
+  // ------------------------------------------------------------------ report
+  let drawReport = null;
+  function renderReport(D) {
+    const SERIES = ['var(--series-1)', 'var(--series-2)'], STATES = ['team_a', 'team_b'], T = D.teams;
+    const t0 = D.spells.length ? D.spells[0].start : 0;
+    const pct = v => (v * 100).toFixed(0) + '%';
+    const fine = D.duration_seconds < 600;
+    const clock = s => { s = Math.max(0, fine ? Math.round(s * 10) / 10 : Math.round(s));
+      const m = Math.floor(s / 60), r = s - m * 60;
+      return String(m).padStart(2, '0') + ':' + (r < 10 ? '0' : '') + (fine && r % 1 ? r.toFixed(1) : r.toFixed(0)); };
+    const el = (tag, attrs, text) => { const e = document.createElement(tag);
+      for (const k in attrs || {}) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+    const svgEl = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const k in attrs || {}) e.setAttribute(k, attrs[k]); return e; };
+    for (const id of ['split', 'legend', 'legend2', 'timeline', 'spells-table', 'blocks', 'blocks-table', 'stats', 'quality']) $(id).replaceChildren();
+    $('report').hidden = false;
+    const mins = D.duration_seconds / 60;
+    $('report-sub').textContent = D.video + ' · ' + (mins >= 1 ? mins.toFixed(0) + ' min' : D.duration_seconds.toFixed(0) + ' s') +
+      ' of video, looked at ' + D.rate_hz + ' times a second';
+    const w = $('warn'); w.hidden = !D.warning; w.textContent = D.warning || '';
+
+    function tooltip(host) {
+      const tip = el('div', {class: 'tip'}); host.appendChild(tip);
+      return {
+        show(x, y, when, rows, below) {
+          tip.replaceChildren();
+          if (when) tip.appendChild(el('div', {class: 'when'}, when));
+          for (const r of rows) { const row = el('div', {class: 'row2'});
+            if (r.colour) { const k = el('i', {class: 'key'}); k.style.background = r.colour; row.appendChild(k); }
+            row.appendChild(el('b', {}, r.value)); row.appendChild(document.createTextNode(r.label)); tip.appendChild(row); }
+          tip.style.display = 'block';
+          const hw = host.clientWidth, tw = tip.offsetWidth;
+          tip.style.left = Math.min(Math.max(0, x + 12), hw - tw) + 'px';
+          tip.style.top = (below ? y + 8 : Math.max(0, y - tip.offsetHeight - 10)) + 'px';
+        },
+        hide() { tip.style.display = 'none'; }
+      };
+    }
+
+    // 1. Tall segmented bar
+    const split = $('split');
+    split.setAttribute('aria-label', 'Possession: ' + T.map(t => t.name + ' ' + pct(t.possession)).join(', '));
+    split.parentElement.querySelectorAll('.tip').forEach(t => t.remove());
+    const splitTip = tooltip(split.parentElement); split.parentElement.style.position = 'relative';
+    T.forEach((t, k) => {
+      if (t.possession <= 0) return;
+      const seg = el('div', {class: 'seg', tabindex: '0', 'aria-label': t.name + ': ' + pct(t.possession) + ', ' + clock(t.seconds_on_ball) + ' on the ball'});
+      seg.style.flex = String(t.possession); seg.style.background = SERIES[k];
+      seg.appendChild(el('span', {}, pct(t.possession))); split.appendChild(seg);
+      const show = () => { const r = seg.getBoundingClientRect(), h = split.parentElement.getBoundingClientRect();
+        splitTip.show(r.left - h.left, r.top - h.top, null, [{value: pct(t.possession), label: t.name + ', ' + clock(t.seconds_on_ball) + ' on the ball', colour: SERIES[k]}]); };
+      seg.addEventListener('pointerenter', show); seg.addEventListener('focus', show);
+      seg.addEventListener('pointerleave', splitTip.hide); seg.addEventListener('blur', splitTip.hide);
+    });
+    requestAnimationFrame(() => split.querySelectorAll('.seg').forEach(seg => { const span = seg.firstChild; if (span && span.offsetWidth + 16 > seg.clientWidth) span.remove(); }));
+    for (const id of ['legend', 'legend2']) T.forEach((t, k) => { const s = el('span'); const i = el('i'); i.style.background = SERIES[k];
+      s.appendChild(i); s.appendChild(document.createTextNode(t.name)); $(id).appendChild(s); });
+
+    function ticks(a, b, maxN) {
+      const steps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
+      const span = b - a, st = steps.find(s => span / s <= maxN) || 3600;
+      const out = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + 1e-9; v += st) out.push(v); return out;
+    }
+
+    // 2. Timeline: one lane per team
+    const tl = $('timeline'), tlTip = tooltip(tl);
+    function drawTimeline() {
+      tl.querySelectorAll('svg').forEach(s => s.remove());
+      const W = tl.clientWidth, labelW = Math.min(150, Math.max(90, W * 0.18)), right = 8, laneH = 18, laneGap = 12, top = 6, axisH = 24;
+      const H = top + 2 * laneH + laneGap + axisH + 6, a = t0, b = t0 + D.duration_seconds;
+      const x = v => labelW + (v - a) / (b - a || 1) * (W - labelW - right);
+      const svg = svgEl('svg', {width: W, height: H, viewBox: '0 0 ' + W + ' ' + H}), axisY = top + 2 * laneH + laneGap + 6;
+      for (const v of ticks(a, b, Math.max(3, Math.floor((W - labelW) / 90)))) {
+        svg.appendChild(svgEl('line', {x1: x(v), x2: x(v), y1: top - 2, y2: axisY, stroke: 'var(--grid)', 'stroke-width': 1}));
+        const anchor = x(v) > W - right - 24 ? 'end' : 'middle';
+        const tx = svgEl('text', {x: anchor === 'end' ? W - right : x(v), y: axisY + 16, 'text-anchor': anchor}); tx.textContent = clock(v); svg.appendChild(tx);
+      }
+      svg.appendChild(svgEl('line', {x1: labelW, x2: W - right, y1: axisY, y2: axisY, stroke: 'var(--axis)', 'stroke-width': 1}));
+      T.forEach((t, k) => {
+        const y = top + k * (laneH + laneGap), lab = svgEl('text', {x: 0, y: y + laneH / 2 + 4, class: 'lane-label'});
+        lab.textContent = t.name.length > 18 ? t.name.slice(0, 17) + '…' : t.name; svg.appendChild(lab);
+        for (const s of D.spells) { if (s.state !== STATES[k]) continue; const x1 = x(s.start), ww = Math.max(1, x(s.end) - x1);
+          svg.appendChild(svgEl('rect', {x: x1, y, width: ww, height: laneH, rx: Math.min(2, ww / 2), fill: SERIES[k]})); }
+      });
+      const cross = svgEl('line', {y1: top - 2, y2: axisY, stroke: 'var(--text-muted)', 'stroke-width': 1, visibility: 'hidden'}); svg.appendChild(cross);
+      const hit = svgEl('rect', {x: labelW, y: 0, width: W - labelW - right, height: axisY, fill: 'transparent', tabindex: '0'}); svg.appendChild(hit);
+      const step = 1 / D.rate_hz;
+      function at(v) {
+        v = Math.round((v - a) / step) * step + a;
+        const s = D.spells.find(s => v >= s.start && v < s.end) || D.spells[D.spells.length - 1];
+        cross.setAttribute('x1', x(v)); cross.setAttribute('x2', x(v)); cross.setAttribute('visibility', 'visible');
+        const k = STATES.indexOf(s.state);
+        tlTip.show(x(v), axisY + 20, clock(v), k >= 0 ? [{value: T[k].name, label: ' has the ball (' + s.seconds.toFixed(1) + ' s spell)', colour: SERIES[k]}]
+          : [{value: 'Nobody', label: ' on the ball'}], true);
+      }
+      hit.addEventListener('pointermove', e => { const r = svg.getBoundingClientRect(); at(a + (e.clientX - r.left - labelW) / (W - labelW - right) * (b - a)); });
+      hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); tlTip.hide(); });
+      hit.addEventListener('click', e => { const r = svg.getBoundingClientRect(); player.currentTime = a + (e.clientX - r.left - labelW) / (W - labelW - right) * (b - a); });
+      let kv = a;
+      hit.addEventListener('focus', () => at(kv));
+      hit.addEventListener('blur', () => { cross.setAttribute('visibility', 'hidden'); tlTip.hide(); });
+      hit.addEventListener('keydown', e => { const jump = Math.max(step, (b - a) / 50);
+        if (e.key === 'ArrowRight') { kv = Math.min(b - step, kv + jump); at(kv); e.preventDefault(); }
+        if (e.key === 'ArrowLeft') { kv = Math.max(a, kv - jump); at(kv); e.preventDefault(); } });
+      tl.prepend(svg);
+    }
+    tl.setAttribute('aria-label', 'Possession timeline: ' + T.map(t => t.name + ' ' + t.spells + ' spells').join(', '));
+    const st = $('spells-table');
+    st.appendChild(el('tr')).append(el('th', {}, 'From'), el('th', {}, 'To'), el('th', {}, 'Ball'), el('th', {class: 'num'}, 'Seconds'));
+    for (const s of D.spells) { const k = STATES.indexOf(s.state);
+      st.appendChild(el('tr')).append(el('td', {}, clock(s.start)), el('td', {}, clock(s.end)), el('td', {}, k >= 0 ? T[k].name : 'Nobody'),
+        el('td', {class: 'num'}, s.seconds.toFixed(1))); }
+
+    // 3. Possession per block: 100% stacked columns (only with enough blocks)
+    function roundTop(x0, top, ww, bottom, r) {
+      return 'M' + x0 + ',' + bottom + 'V' + (top + r) + 'Q' + x0 + ',' + top + ' ' + (x0 + r) + ',' + top +
+        'H' + (x0 + ww - r) + 'Q' + (x0 + ww) + ',' + top + ' ' + (x0 + ww) + ',' + (top + r) + 'V' + bottom + 'Z';
+    }
+    const blocks = D.blocks.filter(b => b.team_a !== null), bc = $('blocks'), bTip = tooltip(bc);
+    function drawBlocks() {
+      bc.querySelectorAll('svg').forEach(s => s.remove());
+      const W = bc.clientWidth, left = 40, right = 8, top = 8, plotH = 160, axisH = 24, H = top + plotH + axisH;
+      const svg = svgEl('svg', {width: W, height: H, viewBox: '0 0 ' + W + ' ' + H}), y = v => top + (1 - v) * plotH;
+      for (const v of [0, 0.5, 1]) { svg.appendChild(svgEl('line', {x1: left, x2: W - right, y1: y(v), y2: y(v), stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1}));
+        const tx = svgEl('text', {x: left - 6, y: y(v) + 4, 'text-anchor': 'end'}); tx.textContent = pct(v); svg.appendChild(tx); }
+      const n = D.blocks.length, slot = (W - left - right) / n, bw = Math.min(24, slot * 0.6), every = Math.ceil(n / Math.max(2, Math.floor((W - left) / 70)));
+      D.blocks.forEach((blk, i) => {
+        const cx = left + slot * (i + 0.5);
+        if (i % every === 0) { const tx = svgEl('text', {x: cx, y: top + plotH + 16, 'text-anchor': 'middle'}); tx.textContent = clock(blk.start); svg.appendChild(tx); }
+        if (blk.team_a === null) return;
+        const xa = cx - bw / 2, ya = y(blk.team_a), r = 4, segs = [{k: 0, path: 'M' + xa + ',' + y(0) + 'V' + ya + 'H' + (xa + bw) + 'V' + y(0) + 'Z'}];
+        const yb = y(1), yb1 = Math.max(yb, ya - 2);
+        if (blk.team_b > 0 && yb1 - yb > 0.5) segs.push({k: 1, path: roundTop(xa, yb, bw, yb1, Math.min(r, (yb1 - yb) / 2))});
+        else if (blk.team_a > 0) segs[0].path = roundTop(xa, ya, bw, y(0), Math.min(r, (y(0) - ya) / 2));
+        const rows = [{value: pct(blk.team_a), label: ' ' + T[0].name, colour: SERIES[0]}, {value: pct(blk.team_b), label: ' ' + T[1].name, colour: SERIES[1]}];
+        for (const s of segs) { if (s.k === 0 && blk.team_a <= 0) continue;
+          const p = svgEl('path', {d: s.path, fill: SERIES[s.k], tabindex: '0'});
+          const show = () => bTip.show(cx, s.k === 0 ? ya : yb, clock(blk.start) + '–' + clock(blk.end), rows);
+          p.addEventListener('pointerenter', show); p.addEventListener('focus', show); p.addEventListener('pointerleave', bTip.hide); p.addEventListener('blur', bTip.hide);
+          svg.appendChild(p); }
+        const hitR = svgEl('rect', {x: cx - slot / 2, y: top, width: slot, height: plotH, fill: 'transparent'});
+        hitR.addEventListener('pointerenter', () => bTip.show(cx, ya, clock(blk.start) + '–' + clock(blk.end), rows));
+        hitR.addEventListener('pointerleave', bTip.hide); svg.insertBefore(hitR, svg.firstChild);
+      });
+      bc.prepend(svg);
+    }
+    $('blocks-card').hidden = blocks.length < 4;
+    if (blocks.length >= 4) {
+      const bs = D.block_seconds;
+      $('blocks-note').textContent = 'Possession split in each ' + (bs >= 60 ? (bs / 60) + '-minute' : bs + '-second') + ' block.';
+      bc.setAttribute('aria-label', 'Possession by block of ' + bs + ' seconds; values in the table view');
+      const bt = $('blocks-table');
+      bt.appendChild(el('tr')).append(el('th', {}, 'From'), el('th', {}, 'To'), el('th', {class: 'num'}, T[0].name), el('th', {class: 'num'}, T[1].name));
+      for (const blk of D.blocks) bt.appendChild(el('tr')).append(el('td', {}, clock(blk.start)), el('td', {}, clock(blk.end)),
+        el('td', {class: 'num'}, blk.team_a === null ? '–' : pct(blk.team_a)), el('td', {class: 'num'}, blk.team_b === null ? '–' : pct(blk.team_b)));
+    }
+
+    // 4. Numbers
+    const tb = $('stats');
+    tb.appendChild(el('tr')).append(el('th', {}, 'Team'), el('th', {}, 'Shirts seen'), el('th', {class: 'num'}, 'Possession'),
+      el('th', {class: 'num'}, 'On the ball'), el('th', {class: 'num'}, 'Spells'), el('th', {class: 'num'}, 'Longest spell'));
+    T.forEach((t, k) => {
+      const name = el('td'), key = el('i', {class: 'chip'}); key.style.background = SERIES[k]; key.style.borderRadius = '3px'; key.style.boxShadow = 'none';
+      name.append(key, document.createTextNode(t.name));
+      const kit = el('td'), chip = el('i', {class: 'chip'}); chip.style.background = t.colour; kit.append(chip, document.createTextNode(t.colour));
+      tb.appendChild(el('tr')).append(name, kit, el('td', {class: 'num'}, pct(t.possession)), el('td', {class: 'num'}, clock(t.seconds_on_ball)),
+        el('td', {class: 'num'}, String(t.spells)), el('td', {class: 'num'}, t.longest_spell_seconds.toFixed(1) + ' s'));
+    });
+    [['Frames analysed', D.frames_analysed.toLocaleString()], ['Ball found by the detector', pct(D.ball_seen_share) + ' of frames'],
+     ['Ball position filled in over short gaps', pct(D.ball_filled_share) + ' of frames'],
+     ['No pitch in view (close-ups, crowd)', pct(D.no_pitch_view_share) + ' of frames'],
+     ['Time with nobody on the ball', clock(D.seconds_no_possession)], ['Detector', D.detector]]
+      .forEach(([k, v]) => $('quality').appendChild(el('li', {}, k + ': ' + v)));
+
+    drawReport = () => { drawTimeline(); if (blocks.length >= 4) drawBlocks(); };
+    drawReport();
+  }
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (drawReport) drawReport(); drawOverlay(); }, 120); });
+
+  // ------------------------------------------------------------------ marked video
+  function drawOverlay() {
+    const cw = overlay.clientWidth, ch = overlay.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (!cw || !ch) return;
+    if (overlay.width !== Math.round(cw * dpr) || overlay.height !== Math.round(ch * dpr)) { overlay.width = Math.round(cw * dpr); overlay.height = Math.round(ch * dpr); }
+    const ctx = overlay.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cw, ch);
+    if (!R || !player.videoWidth) return;
+    const vw = player.videoWidth, vh = player.videoHeight, s = Math.min(cw / vw, ch / vh), ox = (cw - vw * s) / 2, oy = (ch - vh * s) / 2;
+    const t = player.currentTime, i = Math.round((t - R.samples[0].t) * HZ);
+    if (i < 0 || i >= R.samples.length) return;
+    const smp = R.samples[i], st = R.states[i], kit = R.teams.colours;
+    for (const p of smp.people) {
+      const x1 = ox + p.box[0] * s, x2 = ox + p.box[2] * s, y2 = oy + p.box[3] * s, rx = Math.max(6, (x2 - x1) * 0.6), ry = Math.max(3, (x2 - x1) * 0.22);
+      ctx.beginPath(); ctx.ellipse((x1 + x2) / 2, y2, rx, ry, 0, -Math.PI / 4, Math.PI * 1.31);
+      if (p.team === TEAM_A || p.team === TEAM_B) { ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = kit[p.team]; ctx.stroke(); }
+      else { ctx.lineWidth = 1; ctx.strokeStyle = '#282828'; ctx.stroke(); }
+    }
+    const b = R.ball[i];
+    if (b) {
+      const bx = ox + b[0] * s, by = oy + b[1] * s - 8;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 7, by - 12); ctx.lineTo(bx + 7, by - 12); ctx.closePath();
+      if (st === TEAM_A || st === TEAM_B) { ctx.fillStyle = kit[st]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.stroke(); }
+      else { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    }
+    const held = R.cum[i], tot = held[0] + held[1], split = tot ? [100 * held[0] / tot, 100 * held[1] / tot] : [50, 50];
+    ctx.fillStyle = 'rgba(20,20,20,0.85)'; ctx.fillRect(0, 0, cw, 30);
+    ctx.font = '600 13px system-ui, sans-serif'; ctx.textBaseline = 'middle'; let x = 10;
+    for (const k of [TEAM_A, TEAM_B]) {
+      ctx.fillStyle = kit[k]; ctx.fillRect(x, 8, 14, 14); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, 8.5, 13, 13);
+      const label = R.teams.names[k] + ' ' + split[k].toFixed(0) + '%'; ctx.fillStyle = '#f0f0f0'; ctx.fillText(label, x + 20, 15);
+      x += 34 + ctx.measureText(label).width;
+    }
+    const now = st === TEAM_A || st === TEAM_B ? R.teams.names[st] : 'no possession';
+    const right = 'Ball: ' + now + '   ' + clockOf(t); ctx.textAlign = 'right'; ctx.fillText(right, cw - 10, 15); ctx.textAlign = 'left';
+  }
+  function frameLoop() { drawOverlay(); if (player.requestVideoFrameCallback) player.requestVideoFrameCallback(frameLoop); }
+  ['seeked', 'pause', 'loadeddata', 'play'].forEach(ev => player.addEventListener(ev, drawOverlay));
+  if (player.requestVideoFrameCallback) player.requestVideoFrameCallback(frameLoop);
+  else player.addEventListener('timeupdate', drawOverlay);
+  if (!document.fullscreenEnabled) $('full').hidden = true;
+  $('full').addEventListener('click', () => { const box = $('player-box');
+    const go = document.fullscreenElement ? document.exitFullscreen() : box.requestFullscreen();
+    if (go && go.catch) go.catch(() => { $('full').hidden = true; }); });
+  document.addEventListener('fullscreenchange', () => setTimeout(drawOverlay, 100));
+
+  // ------------------------------------------------------------------ downloads
+  function download(name, text, type) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  $('dl-json').addEventListener('click', () => { if (R) download('summary.json', JSON.stringify(R.summary, null, 2), 'application/json'); });
+  $('dl-csv').addEventListener('click', () => {
+    if (!R) return;
+    const rows = [['seconds', 'state', 'p_team_a', 'p_team_b', 'p_none', 'ball_x', 'ball_y', 'ball', 'players_team_a', 'players_team_b', 'pitch_share'].join(',')];
+    R.samples.forEach((s, i) => { const p = R.proba[i], b = R.ball[i];
+      rows.push([s.t.toFixed(2), STATE_NAMES[R.states[i]], p[0].toFixed(3), p[1].toFixed(3), p[2].toFixed(3), b ? b[0].toFixed(1) : '', b ? b[1].toFixed(1) : '',
+        ['missing', 'seen', 'filled'][R.source[i]], s.people.filter(q => q.team === TEAM_A).length, s.people.filter(q => q.team === TEAM_B).length, s.share.toFixed(2)].join(',')); });
+    download('possession.csv', rows.join('\n') + '\n', 'text/csv');
+  });
+
+  // ------------------------------------------------------------------ the run
+  fileInput.addEventListener('change', () => {
+    showError(''); const f = fileInput.files[0]; if (!f) return;
+    if (videoURL) URL.revokeObjectURL(videoURL);
+    videoURL = URL.createObjectURL(f); videoMeta = null; goBtn.disabled = true;
+    $('file-info').textContent = 'Reading ' + f.name + '...';
+    const probe = document.createElement('video'); probe.preload = 'metadata'; probe.muted = true; probe.src = videoURL;
+    probe.addEventListener('loadedmetadata', () => {
+      videoMeta = {name: f.name, duration: probe.duration, width: probe.videoWidth, height: probe.videoHeight};
+      $('file-info').textContent = f.name + ': ' + clockOf(probe.duration) + ', ' + probe.videoWidth + '×' + probe.videoHeight +
+        '. Analysing all of it means looking at about ' + Math.round(probe.duration * HZ).toLocaleString() + ' frames.';
+      goBtn.disabled = false;
+    }, {once: true});
+    probe.addEventListener('error', () => { $('file-info').textContent = ''; showError('This browser cannot read ' + f.name + '. Try an MP4 (H.264) file.'); }, {once: true});
+  });
+
+  stopBtn.addEventListener('click', () => { cancelled = true; stopBtn.disabled = true; statusEl.textContent = 'Stopping after this frame...'; });
+
+  goBtn.addEventListener('click', async () => {
+    if (running || !videoMeta) return;
+    showError('');
+    let given;
+    try { given = parseTeams($('teams').value); } catch (e) { showError(e.message); return; }
+    const t0 = parseClock($('from').value, 0), t1 = Math.min(videoMeta.duration, parseClock($('to').value, videoMeta.duration));
+    if (!(t0 >= 0) || !(t1 > t0)) { showError('Check the From and To times: write them like 1:30, and To must come after From.'); return; }
+    running = true; cancelled = false; goBtn.disabled = true; fileInput.disabled = true; stopBtn.hidden = false; stopBtn.disabled = false;
+    try {
+      await loadModel();
+      const vid = document.createElement('video'); vid.muted = true; vid.preload = 'auto'; vid.src = videoURL;
+      await new Promise((res, rej) => { vid.addEventListener('loadeddata', res, {once: true}); vid.addEventListener('error', () => rej(new Error('The browser could not read this video.')), {once: true}); });
+      const samples = await detectAll(vid, t0, t1, (k, n, t, left) => {
+        setProgress(0.1 + 0.88 * k / n, 'Frame ' + k.toLocaleString() + ' of ' + n.toLocaleString() + ' · ' + clockOf(t) + ' of the video · about ' +
+          (left < 90 ? Math.round(left) + ' s' : Math.round(left / 60) + ' min') + ' left · ' + backend + (backend === 'WASM' ? ' (no WebGPU here, so this is slow)' : ''));
+      });
+      vid.removeAttribute('src'); vid.load();
+      if (samples.length < 10) throw new Error(cancelled ? 'Stopped before enough of the video was analysed.' : 'Too little video to analyse.');
+      setProgress(0.99, 'Telling the teams apart and smoothing...');
+      await new Promise(r => setTimeout(r, 30));
+      const teams = fitTeams(samples, given);
+      for (const s of samples) for (const p of s.people) p.team = teams.assign(p.colour);
+      const {pos, source} = cleanBall(samples, videoMeta.width);
+      const {proba, states} = possession(samples, pos);
+      const summary = summarise(samples, states, source, teams, videoMeta.name, videoMeta);
+      const cum = []; let ca = 0, cb = 0; states.forEach(s => { if (s === TEAM_A) ca++; else if (s === TEAM_B) cb++; cum.push([ca, cb]); });
+      R = {samples, states, proba, ball: pos, source, teams, summary, cum};
+      window.__summary = summary; window.__result = R;
+      renderReport(summary);
+      $('player-card').hidden = false;
+      player.addEventListener('loadedmetadata', () => { player.currentTime = t0; drawOverlay(); }, {once: true});
+      player.src = videoURL;
+      const [a, b] = summary.teams;
+      setProgress(1, (cancelled ? 'Stopped early. ' : 'Done. ') + a.name + ' ' + (a.possession * 100).toFixed(0) + '%, ' + b.name + ' ' + (b.possession * 100).toFixed(0) +
+        '%. Ball found in ' + (summary.ball_seen_share * 100).toFixed(0) + '% of frames.');
+      window.__done = true;
+    } catch (e) {
+      console.error(e); showError(e.message || String(e)); statusEl.textContent = ''; progress.hidden = true; window.__done = 'error';
+    } finally {
+      running = false; goBtn.disabled = false; fileInput.disabled = false; stopBtn.hidden = true;
+    }
+  });
+})();
+</script>
+</body>
+</html>

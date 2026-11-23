@@ -4,6 +4,7 @@ Football possession read from tracking data alone: the positions of the 22 playe
 
 **Replay:** https://huggingface.co/spaces/amreleraqi09/possession-from-tracking
 **Model:** https://huggingface.co/amreleraqi09/possession-from-tracking
+**From a match video, in your browser:** https://huggingface.co/spaces/amreleraqi09/possession-from-video
 
 ![The replay: pitch, the model's call next to the event log and a nearest-player baseline, running scores and the full-match timeline](docs/replay.png)
 
@@ -75,7 +76,9 @@ Other tracking sources work too, as long as you load them into the same `Match` 
 
 No tracking data? possession/video.py works from the match video itself. Five times a second it finds the players and the ball in the picture, splits the players into two teams by shirt colour, hands the moment to the team whose nearest player is closest to the ball, and smooths the sequence with the same hidden Markov model as above. The transition matrix comes from models/config.json, so it already knows how often possession changes hands at 5 Hz.
 
-The quickest way to run it is the Colab notebook, on Google's free GPU: [open it in Colab](https://colab.research.google.com/github/amr7772/possession-from-tracking/blob/main/notebooks/video_possession.ipynb), upload a video and run the cells in order.
+The quickest way to try it is [the browser version](https://huggingface.co/spaces/amreleraqi09/possession-from-video): pick a video and the same steps run inside your browser, so nothing is installed and the video never leaves your computer. It is fastest with WebGPU (a recent Chrome or Edge); start with a few minutes of video. The page is hf/video-space/index.html, and the detector it downloads is in models/detector/.
+
+For long videos, use the Colab notebook, on Google's free GPU: [open it in Colab](https://colab.research.google.com/github/amr7772/possession-from-tracking/blob/main/notebooks/video_possession.ipynb), upload a video and run the cells in order.
 
 On your own machine:
 
@@ -107,7 +110,7 @@ What I would try next: add Metrica's third sample game (EPTS format, readable wi
 
 ## License
 
-The code is MIT licensed. The data belongs to Metrica Sports.
+The code is MIT licensed. The data belongs to Metrica Sports. The video detector, YOLO26 by Ultralytics, is licensed under AGPL-3.0, and so is its ONNX export in models/detector/.
 
 ---
 
@@ -115,4 +118,4 @@ The code is MIT licensed. The data belongs to Metrica Sports.
 
 يحدد هذا المشروع أيّ الفريقين يستحوذ على الكرة في مباراة كرة قدم، لحظةً بلحظة، اعتمادًا على بيانات التتبّع وحدها: مواقع اللاعبين والكرة، من دون سجل الأحداث. درّبتُ النموذج على مباراة واختبرته على مباراة أخرى لم يرها، فالتقط 257 فترة استحواذ من أصل 347، مقابل 114 فقط لأبسط طريقة ممكنة، وهي منح الكرة للفريق صاحب أقرب لاعب إليها. وتعرض صفحة الإعادة الملعب وقرار النموذج إلى جانب الحقيقة وإلى جانب تلك الطريقة البسيطة.
 
-ويعمل المشروع أيضًا من فيديو المباراة نفسه، بلا بيانات تتبّع: يجد اللاعبين والكرة في الصورة خمس مرات في الثانية، ويقسم اللاعبين إلى فريقين بحسب لون القميص، وينسب كل لحظة إلى الفريق صاحب أقرب لاعب إلى الكرة، ثم ينعّم النتيجة بنموذج ماركوف نفسه. أسهل طريقة لتشغيله دفتر Colab في مجلد notebooks. لم يُقَس هذا الجزء بعد على سجل أحداث، فأرقامه تقدير أولي.
+ويعمل المشروع أيضًا من فيديو المباراة نفسه، بلا بيانات تتبّع: يجد اللاعبين والكرة في الصورة خمس مرات في الثانية، ويقسم اللاعبين إلى فريقين بحسب لون القميص، وينسب كل لحظة إلى الفريق صاحب أقرب لاعب إلى الكرة، ثم ينعّم النتيجة بنموذج ماركوف نفسه. أسهل طريقة لتجربته [صفحة على Hugging Face](https://huggingface.co/spaces/amreleraqi09/possession-from-video) تحلّل الفيديو داخل المتصفح نفسه، فلا يُرفع الفيديو إلى أي خادم، وللفيديوهات الطويلة دفتر Colab في مجلد notebooks. لم يُقَس هذا الجزء بعد على سجل أحداث، فأرقامه تقدير أولي.

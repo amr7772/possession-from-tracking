@@ -380,8 +380,9 @@ def fit_teams(samples: list[Sample], given: list[tuple[str, str | None]] | None 
               seed: int = 0) -> Teams:
     """Two teams from the shirt colours of everyone on the pitch, over the whole video.
 
-    K-means finds up to eight colour modes; modes closer than merge are joined
-    (a shirt in sun and in shade); the two biggest joined groups are the teams.
+    K-means finds up to eight colour modes; modes are joined while the mean colours
+    of the joined groups are closer than merge (a shirt in sun and in shade, but not
+    white through grey to black); the two biggest joined groups are the teams.
     Smaller groups are referees, goalkeepers and staff. given names the teams
     (with their shirt colours, if known; see parse_teams).
     """
@@ -399,19 +400,23 @@ def fit_teams(samples: list[Sample], given: list[tuple[str, str | None]] | None 
     centres = km.cluster_centers_.astype(np.float32)
     sizes = np.bincount(km.labels_, minlength=k)
 
-    parent = list(range(k))
+    # Join modes closest first, comparing the mean colour of each joined group, so that
+    # small steps (white, grey, black) cannot chain a white kit to the referee and staff.
+    members = [[i] for i in range(k)]
 
-    def root(i):
-        while parent[i] != i:
-            parent[i] = parent[parent[i]]
-            i = parent[i]
-        return i
+    def mean_of(g):
+        w = sizes[g].astype(np.float32)
+        return (centres[g] * w[:, None]).sum(0) / max(1.0, float(w.sum()))
 
-    for i in range(k):
-        for j in range(i + 1, k):
-            if np.linalg.norm(centres[i] - centres[j]) < merge:
-                parent[root(i)] = root(j)
-    roots = np.array([root(i) for i in range(k)])
+    while len(members) > 1:
+        d, a, b = min((float(np.linalg.norm(mean_of(members[a]) - mean_of(members[b]))), a, b)
+                      for a in range(len(members)) for b in range(a + 1, len(members)))
+        if d >= merge:
+            break
+        members[a] += members.pop(b)
+    roots = np.empty(k, int)
+    for g, m in enumerate(members):
+        roots[m] = g
     group_size = {r: sizes[roots == r].sum() for r in set(roots)}
     ranked = sorted(group_size, key=group_size.get, reverse=True)
     if len(ranked) < 2:
