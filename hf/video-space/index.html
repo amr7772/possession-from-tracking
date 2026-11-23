@@ -96,7 +96,7 @@ a { color: inherit; }
 
   <section class="card">
     <h2>Choose a match video</h2>
-    <p class="note">MP4 works best. With WebGPU (a recent Chrome or Edge) the analysis takes about as long as the video itself, often a little longer; without it, several times longer. Try a clip of a few minutes first, and keep this tab open while it runs.</p>
+    <p class="note">MP4 works best. With WebGPU (a recent Chrome or Edge) the analysis takes one to two times as long as the video; without it, several times longer. Try a clip of a few minutes first, and keep this tab open while it runs.</p>
     <input type="file" id="file" accept="video/*" aria-label="Match video">
     <p class="note" id="file-info" style="margin-top:8px"></p>
     <div class="row">
@@ -116,7 +116,7 @@ a { color: inherit; }
 
   <section class="card" id="player-card" hidden>
     <h2>The video, marked</h2>
-    <p class="note">A ring at each player's feet shows his team; the triangle is the ball, filled with the colour of the team that has it.</p>
+    <p class="note">A ring at each player's feet shows the team; the triangle is the ball, filled with the colour of the team that has it.</p>
     <div class="player" id="player-box">
       <video id="player" controls playsinline controlslist="nofullscreen"></video>
       <canvas id="overlay"></canvas>
