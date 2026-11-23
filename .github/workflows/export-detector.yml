@@ -1,0 +1,65 @@
+# Exports the YOLO26s detector to ONNX for the browser version
+# (hf/video-space/index.html) and commits it to models/detector/.
+# Runs when this file changes on main, or by hand from the Actions tab.
+name: Export the browser detector
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/export-detector.yml
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ultralytics and ONNX tools (CPU only)
+        run: |
+          pip install "ultralytics==8.4.216" "onnx>=1.17" onnxslim onnxruntime --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Export to ONNX
+        run: |
+          python - <<'PY'
+          from ultralytics import YOLO
+          YOLO("yolo26s.pt").export(format="onnx", imgsz=(736, 1280), opset=17, simplify=True,
+                                    dynamic=False, nms=False)
+          PY
+          mkdir -p models/detector
+          mv yolo26s.onnx models/detector/yolo26s-736x1280.onnx
+
+      - name: Check the model
+        run: |
+          python - <<'PY'
+          import numpy as np, onnxruntime as ort
+          s = ort.InferenceSession("models/detector/yolo26s-736x1280.onnx")
+          i = s.get_inputs()[0]
+          out = s.run(None, {i.name: np.zeros((1, 3, 736, 1280), np.float32)})[0]
+          print(i.name, i.shape, "->", out.shape)
+          assert i.name == "images" and list(i.shape) == [1, 3, 736, 1280], i
+          assert out.shape == (1, 300, 6), out.shape
+          PY
+          ls -l models/detector
+          sha256sum models/detector/yolo26s-736x1280.onnx
+
+      - name: Commit the model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add models/detector/yolo26s-736x1280.onnx
+          if git diff --cached --quiet; then
+            echo "The model has not changed."
+            exit 0
+          fi
+          git commit -m "Add the YOLO26s detector for the browser version" -m "Exported to ONNX (736x1280 input, end-to-end output) by .github/workflows/export-detector.yml."
+          git push
