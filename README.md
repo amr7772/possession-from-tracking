@@ -71,6 +71,28 @@ Other tracking sources work too, as long as you load them into the same `Match` 
 
 `hf/` holds the Hugging Face model card and the Space readme.
 
+## From a match video
+
+No tracking data? possession/video.py works from the match video itself. Five times a second it finds the players and the ball in the picture, splits the players into two teams by shirt colour, hands the moment to the team whose nearest player is closest to the ball, and smooths the sequence with the same hidden Markov model as above. The transition matrix comes from models/config.json, so it already knows how often possession changes hands at 5 Hz.
+
+The quickest way to run it is the Colab notebook, on Google's free GPU: [open it in Colab](https://colab.research.google.com/github/amr7772/possession-from-tracking/blob/main/notebooks/video_possession.ipynb), upload a video and run the cells in order.
+
+On your own machine:
+
+    pip install -r requirements-video.txt
+    python -m possession.video match.mp4 --teams "Zamalek=white,Al Ahly=red"
+
+--teams names each team with its shirt colour: a word such as white, red or navy, or a hex code, close enough to tell the two kits apart. Without it the teams are named after their shirts. The run writes into out/match/:
+
+- possession.csv: who had the ball, five times a second
+- report.html: the possession split, a timeline of every spell and the numbers
+- annotated.mp4: the video with each player's team and the ball marked
+- summary.json, and detections.npz, which a second run reuses, so renaming the teams does not mean detecting everything again
+
+Without a GPU, use --model yolo26s.pt. On a two-core CPU it took a little under a second per analysed frame, so a full match takes hours; try --duration 120 first.
+
+This part has not been scored against an event log yet, so its numbers are a first estimate, not a result. Distances are measured in the picture rather than on the pitch, so a ball passing in front of a player can count as near him. Goalkeepers and referees are never given the ball; while a keeper holds it, possession stays with the last team seen on it. Replays count as live play unless the grass leaves the picture.
+
 ## Limits
 
 - Two matches from one provider, both anonymised. Nothing here shows how the model does in another league or with another tracking system.
@@ -92,3 +114,5 @@ The code is MIT licensed. The data belongs to Metrica Sports.
 ### بالعربي
 
 يحدد هذا المشروع أيّ الفريقين يستحوذ على الكرة في مباراة كرة قدم، لحظةً بلحظة، اعتمادًا على بيانات التتبّع وحدها: مواقع اللاعبين والكرة، من دون سجل الأحداث. درّبتُ النموذج على مباراة واختبرته على مباراة أخرى لم يرها، فالتقط 257 فترة استحواذ من أصل 347، مقابل 114 فقط لأبسط طريقة ممكنة، وهي منح الكرة للفريق صاحب أقرب لاعب إليها. وتعرض صفحة الإعادة الملعب وقرار النموذج إلى جانب الحقيقة وإلى جانب تلك الطريقة البسيطة.
+
+ويعمل المشروع أيضًا من فيديو المباراة نفسه، بلا بيانات تتبّع: يجد اللاعبين والكرة في الصورة خمس مرات في الثانية، ويقسم اللاعبين إلى فريقين بحسب لون القميص، وينسب كل لحظة إلى الفريق صاحب أقرب لاعب إلى الكرة، ثم ينعّم النتيجة بنموذج ماركوف نفسه. أسهل طريقة لتشغيله دفتر Colab في مجلد notebooks. لم يُقَس هذا الجزء بعد على سجل أحداث، فأرقامه تقدير أولي.
