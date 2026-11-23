@@ -1,0 +1,256 @@
+{
+  "train_game_1_test_game_2": {
+    "model": {
+      "macro_f1": 0.9561,
+      "f1_home": 0.9559,
+      "f1_away": 0.9341,
+      "f1_dead": 0.9784,
+      "accuracy": 0.959,
+      "spell_f1": 0.8172,
+      "spell_precision": 0.9113,
+      "spell_recall": 0.7406,
+      "spells_true": 347,
+      "spells_pred": 282,
+      "spells_matched": 257,
+      "confusion": [
+        [
+          8234,
+          230,
+          69
+        ],
+        [
+          423,
+          7391,
+          168
+        ],
+        [
+          38,
+          222,
+          11248
+        ]
+      ]
+    },
+    "model_without_smoothing": {
+      "macro_f1": 0.9573,
+      "f1_home": 0.9565,
+      "f1_away": 0.9367,
+      "f1_dead": 0.9786,
+      "accuracy": 0.96,
+      "spell_f1": 0.7612,
+      "spell_precision": 0.7425,
+      "spell_recall": 0.781,
+      "spells_true": 347,
+      "spells_pred": 365,
+      "spells_matched": 271,
+      "confusion": [
+        [
+          8218,
+          234,
+          81
+        ],
+        [
+          394,
+          7411,
+          177
+        ],
+        [
+          38,
+          197,
+          11273
+        ]
+      ]
+    },
+    "baseline_nearest_player": {
+      "macro_f1": 0.8493,
+      "f1_home": 0.8017,
+      "f1_away": 0.7773,
+      "f1_dead": 0.9688,
+      "accuracy": 0.8633,
+      "spell_f1": 0.1,
+      "spell_precision": 0.059,
+      "spell_recall": 0.3285,
+      "spells_true": 347,
+      "spells_pred": 1933,
+      "spells_matched": 114,
+      "confusion": [
+        [
+          6837,
+          1514,
+          182
+        ],
+        [
+          1600,
+          6221,
+          161
+        ],
+        [
+          86,
+          289,
+          11133
+        ]
+      ]
+    },
+    "train_out_of_fold": {
+      "macro_f1": 0.9367,
+      "f1_home": 0.9173,
+      "f1_away": 0.935,
+      "f1_dead": 0.958,
+      "accuracy": 0.939,
+      "spell_f1": 0.8268,
+      "spell_precision": 0.8903,
+      "spell_recall": 0.7717,
+      "spells_true": 368,
+      "spells_pred": 319,
+      "spells_matched": 284,
+      "confusion": [
+        [
+          8018,
+          266,
+          35
+        ],
+        [
+          483,
+          7447,
+          50
+        ],
+        [
+          662,
+          237,
+          11217
+        ]
+      ]
+    }
+  },
+  "train_game_2_test_game_1": {
+    "model": {
+      "macro_f1": 0.9435,
+      "f1_home": 0.9265,
+      "f1_away": 0.9381,
+      "f1_dead": 0.9658,
+      "accuracy": 0.9461,
+      "spell_f1": 0.8371,
+      "spell_precision": 0.9302,
+      "spell_recall": 0.7609,
+      "spells_true": 368,
+      "spells_pred": 301,
+      "spells_matched": 280,
+      "confusion": [
+        [
+          8059,
+          224,
+          36
+        ],
+        [
+          502,
+          7429,
+          49
+        ],
+        [
+          516,
+          205,
+          11395
+        ]
+      ]
+    },
+    "model_without_smoothing": {
+      "macro_f1": 0.9445,
+      "f1_home": 0.9275,
+      "f1_away": 0.9397,
+      "f1_dead": 0.9663,
+      "accuracy": 0.947,
+      "spell_f1": 0.7942,
+      "spell_precision": 0.7718,
+      "spell_recall": 0.8179,
+      "spells_true": 368,
+      "spells_pred": 390,
+      "spells_matched": 301,
+      "confusion": [
+        [
+          8056,
+          224,
+          39
+        ],
+        [
+          485,
+          7440,
+          55
+        ],
+        [
+          512,
+          191,
+          11413
+        ]
+      ]
+    },
+    "baseline_nearest_player": {
+      "macro_f1": 0.8135,
+      "f1_home": 0.7736,
+      "f1_away": 0.7379,
+      "f1_dead": 0.9291,
+      "accuracy": 0.8271,
+      "spell_f1": 0.135,
+      "spell_precision": 0.0811,
+      "spell_recall": 0.4022,
+      "spells_true": 368,
+      "spells_pred": 1824,
+      "spells_matched": 148,
+      "confusion": [
+        [
+          6528,
+          1600,
+          191
+        ],
+        [
+          1657,
+          6122,
+          201
+        ],
+        [
+          374,
+          891,
+          10851
+        ]
+      ]
+    },
+    "train_out_of_fold": {
+      "macro_f1": 0.9496,
+      "f1_home": 0.9529,
+      "f1_away": 0.9239,
+      "f1_dead": 0.9721,
+      "accuracy": 0.9525,
+      "spell_f1": 0.8,
+      "spell_precision": 0.8905,
+      "spell_recall": 0.7262,
+      "spells_true": 347,
+      "spells_pred": 283,
+      "spells_matched": 252,
+      "confusion": [
+        [
+          8206,
+          244,
+          83
+        ],
+        [
+          447,
+          7348,
+          187
+        ],
+        [
+          38,
+          332,
+          11138
+        ]
+      ]
+    }
+  },
+  "smoother": {
+    "stickiness": 2,
+    "alpha": 1.0
+  },
+  "classes": [
+    "home",
+    "away",
+    "dead"
+  ],
+  "sample_rate_hz": 5
+}

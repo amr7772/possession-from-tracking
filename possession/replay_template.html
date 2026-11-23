@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who has the ball? Possession from tracking data</title>
+<meta name="description" content="A model that reads ball possession from player and ball positions, replayed against the event log and a nearest-player baseline.">
+<style>
+:root{
+  --bg:#0a0e13;--panel:#11171f;--line:#1f2935;--line2:#2b3746;
+  --text:#e7edf4;--muted:#8a97a8;--faint:#5f6c7c;
+  --home:#ff5a4e;--away:#3ea6ff;--dead:#6c7889;--accent:#f6b93b;
+  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+a{color:var(--text)}
+.wrap{max-width:1320px;margin:0 auto;padding:18px 20px 26px}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:18px;align-items:center;margin-bottom:14px}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}
+.mark{flex:none;width:40px;height:40px;border-radius:10px;background:#f3f5f8;display:grid;place-items:center}
+h1{margin:0;font-size:22px;line-height:1.15;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.share{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-width:330px}
+.share-row{display:grid;grid-template-columns:50px 36px 1fr 36px;gap:8px;align-items:center;font-size:12px;font-variant-numeric:tabular-nums}
+.share-row+.share-row{margin-top:5px}
+.share-row .lab{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:10.5px}
+.share-row .lab.ours{color:var(--accent)}
+.bar{height:8px;border-radius:5px;background:var(--away);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--home);width:50%;transition:width .3s}
+.pct-h{color:var(--home);font-weight:700;text-align:right}
+.pct-a{color:var(--away);font-weight:700}
+.share-note{color:var(--faint);font-size:10.5px;margin-top:5px;text-align:center}
+.tabs{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tabs button{background:none;border:0;padding:7px 12px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13px}
+.tabs button[aria-selected=true]{background:#1d2632;color:var(--text)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{margin:0 0 10px;font-size:13px;font-weight:650}
+.card h3 span{color:var(--muted);font-weight:500}
+.pitch-card{padding:12px}
+.pitch-wrap{position:relative;border-radius:8px;overflow:hidden}
+#pitch{display:block;width:100%;aspect-ratio:111/74;background:#123a28}
+.badge{position:absolute;left:12px;top:12px;display:flex;gap:9px;align-items:stretch;background:rgba(8,12,16,.82);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 10px 6px 7px}
+.badge .swatch{width:4px;border-radius:2px;background:var(--dead)}
+.badge small{display:block;font-size:9.5px;letter-spacing:.08em;color:var(--accent);font-weight:700}
+.badge b{display:block;font-size:12.5px;letter-spacing:.04em}
+.notrack{position:absolute;right:12px;top:12px;font-size:11px;color:var(--muted);background:rgba(8,12,16,.75);padding:5px 8px;border-radius:7px;display:none}
+.pitch-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.legend{display:flex;gap:14px;color:var(--muted);font-size:12px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:8px;padding:4px 5px 4px 9px;font-size:12px;color:var(--muted)}
+.pill.ours{border-color:rgba(246,185,59,.55)}
+.pill.ours>span{color:var(--accent)}
+.tag{font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:3px 8px;border-radius:5px;color:#fff;background:var(--dead);min-width:50px;text-align:center}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.score .who{font-size:12px;color:var(--muted)}
+.score.ours .who{color:var(--accent);font-weight:600}
+.score .big{font-size:34px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;margin:2px 0 4px}
+.score.ours .big{color:var(--accent)}
+.score .small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.delta{border-top:1px solid var(--line);margin-top:12px;padding-top:9px;font-size:12px;color:var(--muted)}
+.delta b{color:var(--accent)}
+#chart{display:block;width:100%;height:150px}
+.chart-legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.chart-legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:3px}
+.chart-legend i.dot{width:7px;height:7px;border-radius:50%;vertical-align:0}
+#what{font-size:13px;min-height:58px}
+#what b{font-weight:650}
+#lastevent{margin-top:10px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;min-height:18px}
+.bottom{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;margin-top:14px}
+.clock{font-size:34px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.1}
+.clock small{font-size:13px;color:var(--muted);font-weight:500;margin-left:6px;letter-spacing:0}
+.play{width:100%;margin:10px 0;padding:10px;border-radius:9px;border:0;background:#f1f4f8;color:#0b0f14;font-weight:750;letter-spacing:.04em;cursor:pointer}
+.row{display:flex;gap:6px}
+.row+.row{margin-top:6px}
+.chip{flex:1;min-width:0;padding:6px 0;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--muted);font-size:12px;font-weight:650;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#141006}
+.tl-card{position:relative}
+.tl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tl-head h3{margin:0}
+.seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;padding:4px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed=true]{background:#1d2632;color:var(--text)}
+.tl{display:grid;grid-template-columns:84px minmax(0,1fr);gap:0 10px;align-items:start}
+.tl .names{display:grid;grid-template-rows:repeat(3,22px);row-gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;align-items:center}
+.tl .names .ours{color:var(--accent)}
+#strips{display:block;width:100%;height:102px;cursor:pointer;touch-action:none}
+.tip{position:absolute;pointer-events:none;background:#000c;border:1px solid var(--line2);color:var(--text);font-size:11px;padding:3px 6px;border-radius:5px;transform:translate(-50%,-100%);display:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.foot{margin-top:16px;color:var(--faint);font-size:11.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot a{color:var(--muted)}
+#method{display:none;max-width:860px}
+#method h2{font-size:20px;margin:6px 0 12px}
+#method h3{font-size:15px;margin:22px 0 6px}
+#method p{color:#c9d3df;margin:0 0 10px}
+#method table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;margin:8px 0 4px}
+#method th,#method td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:right}
+#method th:first-child,#method td:first-child{text-align:left}
+#method th{color:var(--muted);font-weight:600;font-size:12px}
+#method tr.ours td{color:var(--accent);font-weight:650}
+#method .caption{color:var(--muted);font-size:12px;margin-top:2px}
+#method .links a{margin-right:16px}
+@media (max-width:1040px){.grid{grid-template-columns:1fr}.top{grid-template-columns:1fr auto}.share{grid-column:1/-1;order:3;min-width:0}}
+@media (max-width:720px){.top{grid-template-columns:1fr}.tabs{order:4}.tabs button{flex:1}.bottom{grid-template-columns:1fr}.score .big{font-size:28px}h1{font-size:19px}.wrap{padding:12px}.badge{left:8px;top:8px;padding:4px 8px 4px 6px}.badge b{font-size:11px}.badge small{font-size:8.5px}.notrack{right:8px;top:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0a0e13" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="1.5"/><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="12" r="2.6"/><circle cx="17.2" cy="9.2" r="1.3" fill="#ff5a4e" stroke="none"/></svg>
+      </div>
+      <div>
+        <h1>Who has the ball?</h1>
+        <div class="sub">Possession read from tracking data only · Metrica Sports sample game 2 · model trained on game 1</div>
+      </div>
+    </div>
+    <div class="share" aria-label="Possession share so far">
+      <div class="share-row"><span class="lab">Truth</span><span class="pct-h" id="sh-t-h">–</span><div class="bar"><i id="bar-t"></i></div><span class="pct-a" id="sh-t-a">–</span></div>
+      <div class="share-row"><span class="lab ours">Model</span><span class="pct-h" id="sh-m-h">–</span><div class="bar"><i id="bar-m"></i></div><span class="pct-a" id="sh-m-a">–</span></div>
+      <div class="share-note">Possession so far, ball in play · home left, away right</div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="replay">Replay</button>
+      <button role="tab" aria-selected="false" data-tab="method">How it works</button>
+    </nav>
+  </header>
+
+  <section id="replay">
+    <div class="grid">
+      <div class="card pitch-card">
+        <div class="pitch-wrap">
+          <canvas id="pitch"></canvas>
+          <div class="badge"><span class="swatch" id="badge-sw"></span><div><small>MODEL</small><b id="badge-txt">–</b></div></div>
+          <div class="notrack" id="notrack">ball not tracked</div>
+        </div>
+        <div class="pitch-foot">
+          <div class="legend"><span><i style="background:var(--home)"></i>Home</span><span><i style="background:var(--away)"></i>Away</span><span><i style="background:#fff"></i>Ball</span></div>
+          <div class="pills">
+            <div class="pill"><span>Truth</span><b class="tag" id="tag-t">–</b></div>
+            <div class="pill ours"><span>Our model</span><b class="tag" id="tag-m">–</b></div>
+            <div class="pill"><span>Baseline</span><b class="tag" id="tag-b">–</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h3>Score so far <span>· possession spells, IoU ≥ 0.5</span></h3>
+          <div class="scores">
+            <div class="score ours"><div class="who">Our model</div><div class="big" id="sc-m">–</div><div class="small" id="sc-m-s">&nbsp;</div></div>
+            <div class="score"><div class="who">Nearest-player baseline</div><div class="big" id="sc-b">–</div><div class="small" id="sc-b-s">&nbsp;</div></div>
+          </div>
+          <div class="delta" id="delta">&nbsp;</div>
+        </div>
+        <div class="card">
+          <h3>What the model thinks <span>· last 30 seconds</span></h3>
+          <canvas id="chart"></canvas>
+          <div class="chart-legend"><span><i style="background:var(--home)"></i>Home</span><span><i style="background:var(--away)"></i>Away</span><span><i style="background:var(--dead)"></i>Dead ball</span><span><i class="dot" style="background:#d9dee5"></i>Touch</span></div>
+        </div>
+        <div class="card">
+          <h3>What is happening</h3>
+          <div id="what">&nbsp;</div>
+          <div id="lastevent">&nbsp;</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="card">
+        <div class="clock" id="clock">00:00<small id="half">1st half</small></div>
+        <button class="play" id="play">PAUSE</button>
+        <div class="row" id="speeds"></div>
+        <div class="row"><button class="chip" id="back">− 10 s</button><button class="chip" id="fwd">+ 10 s</button></div>
+      </div>
+      <div class="card tl-card">
+        <div class="tl-head"><h3>Timeline <span>· click to jump</span></h3>
+          <div class="seg"><button aria-pressed="true" data-zoom="match">Match</button><button aria-pressed="false" data-zoom="window">10 min</button></div>
+        </div>
+        <div class="tl">
+          <div class="names"><span>Truth</span><span class="ours">Our model</span><span>Baseline</span></div>
+          <canvas id="strips"></canvas>
+        </div>
+        <div class="tip" id="tip"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="method">
+    <h2>How it works</h2>
+    <p>The question is simple: at every moment of a football match, does the home team have the ball, does the away team have it, or is the ball dead? The model answers it from positions alone, the 22 players and the ball, sampled five times a second. The event log is used to build the answer key and to score the model, never as an input.</p>
+    <h3>The answer key</h3>
+    <p>A team gets the ball at each pass, shot, recovery, lost ball or set piece the event log credits it with, and keeps it until the other team's next one or until the ball goes dead. The ball goes dead when it crosses a line, when the referee stops play for a foul or an offside that leads to a set piece, and at the end of each half. Metrica only tracks the ball while it is in play, so a gap of more than five seconds with no ball and nothing in the log counts as a stoppage too.</p>
+    <h3>What the model looks at</h3>
+    <p>About eighty numbers per frame: how far the nearest home and away players are from the ball, and how that gap moved over the previous and next few seconds; the speed of the ball and the sudden changes in its velocity that mark a touch, with the team that was closest at each touch; whether the ball is tracked at all or sits outside the lines; how fast the players are moving; and the shape of each team.</p>
+    <h3>The model</h3>
+    <p>A gradient-boosted tree classifier (LightGBM) scores each frame. A three-state hidden Markov model then picks the most likely sequence, which keeps the answer from flickering between teams every time two players are level with the ball. Its two settings were tuned on game 1 alone. Game 2 was only used for the final score.</p>
+    <h3>How it is scored</h3>
+    <p><b>Frame macro-F1</b> averages the F1 of home, away and dead ball over every frame. <b>Spell F1</b> looks at possession spells, unbroken runs of one team on the ball. A predicted spell counts as found when it overlaps a true spell of the same team with an intersection-over-union of at least 0.5. A prediction that flickers breaks spells into pieces, which is why the nearest-player baseline does fine on frames and badly on spells.</p>
+    <h3>Results</h3>
+    <div id="results"></div>
+    <h3>Limits</h3>
+    <p>Two matches, both anonymised and from the same provider, so this says nothing yet about other leagues or other tracking systems. The answer key inherits the event log's timing, which can be a few frames off. And because the ball stops being tracked when play stops, spotting dead balls is the easy half of the problem here; telling home from away is where the work is.</p>
+    <p class="links"><a id="lk-gh" href="#">Code on GitHub</a><a id="lk-hf" href="#">Model on Hugging Face</a><a id="lk-data" href="#">Metrica Sports sample data</a></p>
+  </section>
+
+  <footer class="foot">
+    <span>Data: Metrica Sports sample data, game 2 (anonymised). The model never saw this match while training.</span>
+    <span><a id="ft-gh" href="#">GitHub</a> · <a id="ft-hf" href="#">Hugging Face</a></span>
+  </footer>
+</div>
+
+<script id="data" type="application/json">/*__DATA__*/{}</script>
+<script>
+(() => {
+"use strict";
+const D = JSON.parse(document.getElementById("data").textContent);
+const N = D.n, HZ = D.hz, SENT = -32768;
+const $ = id => document.getElementById(id);
+const bytes = b64 => { const s = atob(b64), out = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i); return out; };
+const P = new Int16Array(bytes(D.players).buffer);
+const B = new Int16Array(bytes(D.ball).buffer);
+const PH = bytes(D.p_home), PA = bytes(D.p_away), PD = bytes(D.p_dead);
+const TRACK = { truth: D.truth, model: D.model, base: D.baseline };
+const lab = (str, i) => str.charCodeAt(i) - 48;
+const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const COL = { home: cssv("--home"), away: cssv("--away"), dead: cssv("--dead"), accent: cssv("--accent") };
+const CLS_COL = [COL.home, COL.away, COL.dead];
+const SHORT = ["HOME", "AWAY", "DEAD"];
+const TEAM = ["Home", "Away"];
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+
+const mask = new Uint8Array(N);
+for (const [s, e] of D.mask) mask.fill(1, s, e);
+
+function prefix(str) {
+  const h = new Int32Array(N + 1), a = new Int32Array(N + 1);
+  for (let i = 0; i < N; i++) {
+    const c = lab(str, i);
+    h[i + 1] = h[i] + (mask[i] && c === 0 ? 1 : 0);
+    a[i + 1] = a[i] + (mask[i] && c === 1 ? 1 : 0);
+  }
+  return { h, a };
+}
+const CUM = { truth: prefix(TRACK.truth), model: prefix(TRACK.model) };
+
+const PER = D.periods;
+const periodIdx = i => (i >= PER[1].start ? 1 : 0);
+const clockSec = i => { const k = periodIdx(i); return (k ? 2700 : 0) + Math.max(0, (i - PER[k].kickoff) / HZ); };
+const fmt = sec => { sec = Math.floor(sec); return String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); };
+
+function slotAt(sl, i) {
+  if (i < sl.start || i >= sl.end) return null;
+  const o = sl.offset + 2 * (i - sl.start);
+  return P[o] === SENT ? null : [P[o] / 10, P[o + 1] / 10];
+}
+function ballAt(i) {
+  if (i < 0 || i >= N || B[2 * i] === SENT) return null;
+  return [B[2 * i] / 10, B[2 * i + 1] / 10];
+}
+function mix(a, b, t) {
+  if (!a) return t > 0.5 ? b : null;
+  if (!b) return t < 0.5 ? a : null;
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+function nearest(i) {
+  const b = ballAt(i); if (!b) return null;
+  const best = [Infinity, Infinity];
+  for (const sl of D.slots) {
+    const p = slotAt(sl, i); if (!p) continue;
+    const d = Math.hypot(p[0] - b[0], p[1] - b[1]);
+    const k = sl.team === "home" ? 0 : 1;
+    if (d < best[k]) best[k] = d;
+  }
+  return best;
+}
+function lastBefore(list, i) { // list sorted by [0]
+  let lo = 0, hi = list.length - 1, ans = -1;
+  while (lo <= hi) { const mid = (lo + hi) >> 1; if (list[mid][0] <= i) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
+  return ans < 0 ? null : list[ans];
+}
+
+/* ---------- pitch ---------- */
+const pitch = $("pitch"), pctx = pitch.getContext("2d");
+const MARGIN = 3, WL = 105 + 2 * MARGIN;
+let S = 1, DPR = 1, pitchBg = null;
+const X = x => (x + 52.5 + MARGIN) * S, Y = y => (y + 34 + MARGIN) * S;
+
+function drawPitchBackground() {
+  pitchBg = document.createElement("canvas");
+  pitchBg.width = pitch.width; pitchBg.height = pitch.height;
+  const c = pitchBg.getContext("2d");
+  c.fillStyle = "#123a28"; c.fillRect(0, 0, pitchBg.width, pitchBg.height);
+  c.fillStyle = "rgba(255,255,255,0.028)";
+  for (let k = 0; k < 10; k += 2) c.fillRect(X(-52.5 + k * 10.5), Y(-34), 10.5 * S, 68 * S);
+  const g = c.createRadialGradient(pitchBg.width / 2, pitchBg.height / 2, pitchBg.height * 0.25, pitchBg.width / 2, pitchBg.height / 2, pitchBg.width * 0.72);
+  g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.38)");
+  c.fillStyle = g; c.fillRect(0, 0, pitchBg.width, pitchBg.height);
+  c.strokeStyle = "rgba(255,255,255,0.5)"; c.fillStyle = "rgba(255,255,255,0.5)";
+  c.lineWidth = Math.max(1, 1.15 * DPR);
+  const rect = (x, y, w, h) => c.strokeRect(X(x), Y(y), w * S, h * S);
+  const arc = (x, y, r, a0, a1) => { c.beginPath(); c.arc(X(x), Y(y), r * S, a0, a1); c.stroke(); };
+  const spot = (x, y) => { c.beginPath(); c.arc(X(x), Y(y), Math.max(1.5 * DPR, 0.3 * S), 0, 7); c.fill(); };
+  rect(-52.5, -34, 105, 68);
+  c.beginPath(); c.moveTo(X(0), Y(-34)); c.lineTo(X(0), Y(34)); c.stroke();
+  arc(0, 0, 9.15, 0, 7); spot(0, 0);
+  const a = Math.acos(5.5 / 9.15);
+  for (const s of [-1, 1]) {
+    const gx = s * 52.5;
+    rect(gx, -20.16, -s * 16.5, 40.32);
+    rect(gx, -9.16, -s * 5.5, 18.32);
+    spot(s * 41.5, 0);
+    if (s < 0) arc(-41.5, 0, 9.15, -a, a); else arc(41.5, 0, 9.15, Math.PI - a, Math.PI + a);
+    rect(gx, -3.66, s * 1.6, 7.32);
+    for (const t of [-1, 1]) {
+      const a0 = s < 0 ? (t < 0 ? 0 : -Math.PI / 2) : (t < 0 ? Math.PI / 2 : Math.PI);
+      arc(gx, t * 34, 1, a0, a0 + Math.PI / 2);
+    }
+  }
+}
+
+let touchIdx = D.touches;
+function drawFrame(f) {
+  pctx.drawImage(pitchBg, 0, 0);
+  const i0 = Math.floor(f), t = f - i0, i1 = Math.min(i0 + 1, N - 1);
+  const r = Math.max(4 * DPR, 0.85 * S);
+  for (const sl of D.slots) {
+    const p = mix(slotAt(sl, i0), slotAt(sl, i1), t); if (!p) continue;
+    const q = mix(slotAt(sl, Math.max(i0 - 2, 0)), slotAt(sl, Math.max(i1 - 2, 0)), t);
+    if (q) {
+      pctx.strokeStyle = rgba(sl.team === "home" ? COL.home : COL.away, 0.45);
+      pctx.lineWidth = 2 * DPR; pctx.lineCap = "round";
+      pctx.beginPath(); pctx.moveTo(X(q[0]), Y(q[1])); pctx.lineTo(X(p[0]), Y(p[1])); pctx.stroke();
+    }
+  }
+  for (const sl of D.slots) {
+    const p = mix(slotAt(sl, i0), slotAt(sl, i1), t); if (!p) continue;
+    pctx.beginPath(); pctx.arc(X(p[0]), Y(p[1]), r, 0, 7);
+    pctx.fillStyle = sl.team === "home" ? COL.home : COL.away; pctx.fill();
+    pctx.lineWidth = 1.4 * DPR; pctx.strokeStyle = "rgba(255,255,255,0.9)"; pctx.stroke();
+  }
+  // ball trail, last second
+  pctx.lineWidth = 1.6 * DPR;
+  for (let k = Math.max(0, i0 - HZ); k < i0; k++) {
+    const a = ballAt(k), b = ballAt(k + 1); if (!a || !b) continue;
+    pctx.strokeStyle = `rgba(255,255,255,${0.12 + 0.5 * (k - i0 + HZ) / HZ})`;
+    pctx.beginPath(); pctx.moveTo(X(a[0]), Y(a[1])); pctx.lineTo(X(b[0]), Y(b[1])); pctx.stroke();
+  }
+  const bp = mix(ballAt(i0), ballAt(i1), t);
+  $("notrack").style.display = bp ? "none" : "block";
+  if (bp) {
+    const m = lab(TRACK.model, i0);
+    if (m < 2) {
+      pctx.beginPath(); pctx.arc(X(bp[0]), Y(bp[1]), 2.3 * S, 0, 7);
+      pctx.strokeStyle = rgba(CLS_COL[m], 0.85); pctx.lineWidth = 2 * DPR; pctx.stroke();
+    }
+    const lt = lastBefore(touchIdx, i0);
+    if (lt && f - lt[0] < 3) {
+      const tb = ballAt(lt[0]);
+      if (tb) {
+        const k = (f - lt[0]) / 3;
+        pctx.beginPath(); pctx.arc(X(tb[0]), Y(tb[1]), (1.2 + 3 * k) * S, 0, 7);
+        pctx.strokeStyle = `rgba(255,255,255,${0.7 * (1 - k)})`; pctx.lineWidth = 1.5 * DPR; pctx.stroke();
+      }
+    }
+    pctx.beginPath(); pctx.arc(X(bp[0]), Y(bp[1]), Math.max(3.2 * DPR, 0.5 * S), 0, 7);
+    pctx.fillStyle = "#fff"; pctx.fill(); pctx.strokeStyle = "rgba(0,0,0,0.65)"; pctx.lineWidth = 1.2 * DPR; pctx.stroke();
+  }
+}
+
+/* ---------- probability chart ---------- */
+const chart = $("chart"), cctx = chart.getContext("2d");
+function drawChart(i) {
+  const W = chart.width, H = chart.height;
+  cctx.clearRect(0, 0, W, H);
+  const L = 2 * DPR, R = 36 * DPR, T = 8 * DPR, Bm = 26 * DPR;
+  const w = W - L - R, h = H - T - Bm, span = 30 * HZ, start = i - span;
+  const xOf = k => L + ((k - start) / span) * w, yOf = v => T + (1 - v / 255) * h;
+  cctx.lineWidth = 1; cctx.strokeStyle = "rgba(255,255,255,0.07)";
+  cctx.fillStyle = "rgba(255,255,255,0.35)"; cctx.font = `${10 * DPR}px ${cssv("--font")}`;
+  for (const v of [0, 127.5, 255]) { cctx.beginPath(); cctx.moveTo(L, yOf(v)); cctx.lineTo(L + w, yOf(v)); cctx.stroke(); }
+  cctx.textAlign = "left";
+  cctx.fillText("−30 s", L, H - 4 * DPR); cctx.textAlign = "center"; cctx.fillText("−15 s", L + w / 2, H - 4 * DPR);
+  cctx.textAlign = "right"; cctx.fillText("now", L + w, H - 4 * DPR);
+  const series = [[PD, COL.dead, [4 * DPR, 3 * DPR]], [PA, COL.away, []], [PH, COL.home, []]];
+  for (const [arr, col, dash] of series) {
+    cctx.beginPath();
+    for (let k = Math.max(0, start), first = true; k <= i; k++) {
+      const x = xOf(k), y = yOf(arr[k]);
+      if (first) { cctx.moveTo(x, y); first = false; } else cctx.lineTo(x, y);
+    }
+    cctx.setLineDash(dash); cctx.strokeStyle = col; cctx.lineWidth = 1.8 * DPR; cctx.stroke();
+  }
+  cctx.setLineDash([]);
+  const ty = T + h + 8 * DPR;
+  let j = touchIdx.length - 1;
+  const lt = lastBefore(touchIdx, i);
+  if (lt) j = touchIdx.indexOf(lt);
+  for (; j >= 0 && touchIdx[j][0] >= start; j--) {
+    cctx.beginPath(); cctx.arc(xOf(touchIdx[j][0]), ty, 2.6 * DPR, 0, 7);
+    cctx.fillStyle = touchIdx[j][1] === 0 ? COL.home : COL.away; cctx.fill();
+  }
+  cctx.textAlign = "left"; cctx.font = `600 ${10.5 * DPR}px ${cssv("--font")}`;
+  const vals = [[PH[i], COL.home], [PA[i], COL.away], [PD[i], COL.dead]].sort((a, b) => b[0] - a[0]);
+  const gapY = 12 * DPR, bottom = T + h + 4 * DPR;
+  const ys = vals.map(([v]) => yOf(v) + 4 * DPR);
+  for (let k = 1; k < ys.length; k++) ys[k] = Math.max(ys[k], ys[k - 1] + gapY);
+  if (ys[ys.length - 1] > bottom) { ys[ys.length - 1] = bottom; for (let k = ys.length - 2; k >= 0; k--) ys[k] = Math.min(ys[k], ys[k + 1] - gapY); }
+  vals.forEach(([v, col], k) => { cctx.fillStyle = col; cctx.fillText(Math.round(v / 2.55) + "%", L + w + 5 * DPR, ys[k]); });
+}
+
+/* ---------- timeline strips ---------- */
+const strips = $("strips"), sctx = strips.getContext("2d");
+const ROW = 22, GAP = 6;
+let zoom = "match", stripBg = null, view = null;
+function computeView(i) {
+  if (zoom === "match") return { a: 0, b: N, key: "match" };
+  const k = periodIdx(i), p = PER[k];
+  const sec = Math.max(0, (i - p.kickoff) / HZ), w0 = Math.floor(sec / 600) * 600;
+  const a = Math.max(p.start, Math.round(p.kickoff + w0 * HZ));
+  return { a, b: Math.min(p.end, a + 600 * HZ), key: `w${k}-${w0}`, k, w0 };
+}
+function renderStrips() {
+  stripBg = document.createElement("canvas");
+  stripBg.width = strips.width; stripBg.height = strips.height;
+  const c = stripBg.getContext("2d"), W = strips.width, span = view.b - view.a;
+  const rowH = ROW * DPR, gap = GAP * DPR;
+  [TRACK.truth, TRACK.model, TRACK.base].forEach((str, r) => {
+    const y = r * (rowH + gap);
+    c.fillStyle = "#1a222c"; c.fillRect(0, y, W, rowH);
+    for (let px = 0; px < W; px++) {
+      const s0 = Math.floor(view.a + (px / W) * span), s1 = Math.max(s0 + 1, Math.floor(view.a + ((px + 1) / W) * span));
+      const cnt = [0, 0, 0]; let inEval = 0;
+      for (let s = s0; s < s1 && s < N; s++) { cnt[lab(str, s)]++; inEval += mask[s]; }
+      const best = cnt[0] >= cnt[1] && cnt[0] >= cnt[2] ? 0 : cnt[1] >= cnt[2] ? 1 : 2;
+      c.fillStyle = inEval * 2 >= s1 - s0 ? CLS_COL[best] : rgba(CLS_COL[best], 0.3);
+      c.fillRect(px, y, 1, rowH);
+    }
+  });
+  const ty = 3 * (rowH + gap) + 2 * DPR;
+  c.font = `${10 * DPR}px ${cssv("--font")}`; c.fillStyle = "rgba(255,255,255,0.4)"; c.strokeStyle = "rgba(255,255,255,0.25)";
+  const tick = (sample, label) => {
+    if (sample < view.a || sample > view.b) return;
+    const x = ((sample - view.a) / span) * W;
+    c.beginPath(); c.moveTo(x, ty); c.lineTo(x, ty + 4 * DPR); c.stroke();
+    c.textAlign = x < 12 * DPR ? "left" : x > W - 12 * DPR ? "right" : "center";
+    c.fillText(label, x, ty + 15 * DPR);
+  };
+  if (zoom === "match") {
+    PER.forEach((p, k) => { for (let m = 0; m <= 45; m += 15) { if (k === 0 && m === 45) continue; const s = p.kickoff + m * 60 * HZ; if (s < p.end) tick(s, `${m + 45 * k}'`); } });
+    const hx = ((PER[1].start - view.a) / span) * W;
+    c.fillStyle = "#11171f"; c.fillRect(hx - DPR, 0, 2 * DPR, 3 * (rowH + gap));
+  } else {
+    for (let m = 0; m <= 10; m++) tick(PER[view.k].kickoff + (view.w0 + m * 60) * HZ, `${Math.round(view.w0 / 60) + m + 45 * view.k}'`);
+  }
+}
+function drawStrips(i) {
+  const v = computeView(i);
+  if (!view || v.key !== view.key || !stripBg) { view = v; renderStrips(); }
+  sctx.clearRect(0, 0, strips.width, strips.height);
+  sctx.drawImage(stripBg, 0, 0);
+  if (i >= view.a && i <= view.b) {
+    const x = ((i - view.a) / (view.b - view.a)) * strips.width, hgt = 3 * (ROW + GAP) * DPR - GAP * DPR;
+    sctx.fillStyle = COL.accent; sctx.fillRect(x - DPR, 0, 2 * DPR, hgt);
+    sctx.beginPath(); sctx.moveTo(x - 5 * DPR, 0); sctx.lineTo(x + 5 * DPR, 0); sctx.lineTo(x, 6 * DPR); sctx.fill();
+  }
+}
+function sampleAtX(clientX) {
+  const r = strips.getBoundingClientRect();
+  const fx = Math.min(Math.max((clientX - r.left) / r.width, 0), 1);
+  return Math.round(view.a + fx * (view.b - view.a));
+}
+let dragging = false;
+strips.addEventListener("pointerdown", e => { dragging = true; strips.setPointerCapture(e.pointerId); seek(sampleAtX(e.clientX)); });
+strips.addEventListener("pointermove", e => {
+  const tip = $("tip"), card = strips.closest(".tl-card").getBoundingClientRect(), r = strips.getBoundingClientRect();
+  if (dragging) seek(sampleAtX(e.clientX));
+  tip.style.display = "block"; tip.textContent = fmt(clockSec(sampleAtX(e.clientX)));
+  tip.style.left = (e.clientX - card.left) + "px"; tip.style.top = (r.top - card.top - 4) + "px";
+});
+strips.addEventListener("pointerup", () => { dragging = false; });
+strips.addEventListener("pointerleave", () => { $("tip").style.display = "none"; });
+
+/* ---------- panels ---------- */
+const EVT = { "PASS": "pass", "BALL LOST": "lost the ball", "RECOVERY": "recovery", "SET PIECE": "set piece", "CHALLENGE": "challenge", "BALL OUT": "ball out", "SHOT": "shot", "FAULT RECEIVED": "won a foul", "CARD": "card" };
+const pct = v => Math.round(v / 2.55) + "%";
+function setTag(el, c) { el.textContent = SHORT[c]; el.style.background = CLS_COL[c]; }
+function recentSwitch(i) {
+  const m = lab(TRACK.model, i);
+  for (let j = i; j > Math.max(0, i - 2 * HZ); j--) if (lab(TRACK.model, j - 1) !== m) return true;
+  return false;
+}
+function explain(i) {
+  const t = lab(TRACK.truth, i), m = lab(TRACK.model, i), b = lab(TRACK.base, i);
+  const near = nearest(i);
+  const lt = lastBefore(touchIdx, i);
+  if (!near) return `<b>Ball not tracked.</b> Metrica only follows the ball while it is in play, so a gap usually means a stoppage. The model puts dead ball at ${pct(PD[i])}.`;
+  if (lt && i - lt[0] <= 4) return `<b>Touch.</b> The ball changed speed or direction sharply next to ${lt[1] === 0 ? "a home" : "an away"} player. The model counts touches as evidence; one touch alone does not hand over the ball.`;
+  if (recentSwitch(i)) return m === 2 ? `<b>The model calls the ball dead.</b> Dead-ball probability ${pct(PD[i])}.` : `<b>The model hands the ball to ${TEAM[m].toLowerCase()}.</b> ${TEAM[m]} probability ${pct(m === 0 ? PH[i] : PA[i])}.`;
+  if (t !== m) return `<b>The model and the event log disagree.</b> The log says ${t === 2 ? "dead ball" : TEAM[t].toLowerCase()}, the model says ${m === 2 ? "dead ball" : TEAM[m].toLowerCase()}.`;
+  const dh = near[0].toFixed(1), da = near[1].toFixed(1);
+  if (m < 2 && b < 2 && b !== m) return `<b>The baseline jumps to ${TEAM[b].toLowerCase()}</b> because ${b === 0 ? "a home" : "an away"} player is a touch closer to the ball (${b === 0 ? dh : da} m against ${b === 0 ? da : dh} m). The model stays with ${TEAM[m].toLowerCase()}.`;
+  if (m === 2) return `<b>Dead ball.</b> The model puts it at ${pct(PD[i])}.`;
+  return `<b>${TEAM[m]} on the ball.</b> Nearest home player ${dh} m from it, nearest away player ${da} m.`;
+}
+function lastEvent(i) {
+  const e = lastBefore(D.events, i); if (!e) return "&nbsp;";
+  const [idx, team, type, sub, from, to] = e;
+  const what = type === "SET PIECE" && sub ? sub.toLowerCase() : (EVT[type] || type.toLowerCase()) + (sub && type !== "PASS" ? ` (${sub.toLowerCase()})` : "");
+  const who = from ? ` · #${from}${to ? " → #" + to : ""}` : "";
+  return `Event log ${fmt(clockSec(idx))} · ${TEAM[team]} ${what}${who}`;
+}
+function updatePanels(i) {
+  const t = lab(TRACK.truth, i), m = lab(TRACK.model, i), b = lab(TRACK.base, i);
+  setTag($("tag-t"), t); setTag($("tag-m"), m); setTag($("tag-b"), b);
+  $("badge-sw").style.background = CLS_COL[m];
+  $("badge-txt").textContent = m === 2 ? "DEAD BALL" : `${SHORT[m]} IN POSSESSION`;
+  const k = periodIdx(i);
+  $("clock").firstChild.nodeValue = fmt(clockSec(i));
+  $("half").textContent = k ? "2nd half" : "1st half";
+  for (const [key, tag] of [["truth", "t"], ["model", "m"]]) {
+    const h = CUM[key].h[i + 1], a = CUM[key].a[i + 1];
+    if (h + a < 30 * HZ) { $(`sh-${tag}-h`).textContent = "–"; $(`sh-${tag}-a`).textContent = "–"; $(`bar-${tag}`).style.width = "50%"; continue; }
+    const ph = Math.round((100 * h) / (h + a));
+    $(`sh-${tag}-h`).textContent = ph + "%"; $(`sh-${tag}-a`).textContent = 100 - ph + "%"; $(`bar-${tag}`).style.width = ph + "%";
+  }
+  const C = D.curve, ci = Math.min(C.model_spell_f1.length - 1, Math.floor(i / C.every));
+  if (C.model_spells_true[ci] < 8) {
+    $("sc-m").textContent = "–"; $("sc-b").textContent = "–"; $("sc-m-s").innerHTML = "&nbsp;"; $("sc-b-s").innerHTML = "&nbsp;"; $("delta").innerHTML = "The scores appear once a few possession spells have been played.";
+  } else {
+    $("sc-m").textContent = C.model_spell_f1[ci].toFixed(2);
+    $("sc-b").textContent = C.base_spell_f1[ci].toFixed(2);
+    $("sc-m-s").textContent = `macro-F1 ${C.model_macro_f1[ci].toFixed(2)} · ${C.model_spells_matched[ci]} of ${C.model_spells_true[ci]} spells found`;
+    $("sc-b-s").textContent = `macro-F1 ${C.base_macro_f1[ci].toFixed(2)} · ${C.base_spells_pred[ci]} predicted for ${C.base_spells_true[ci]}`;
+    const d = C.model_spell_f1[ci] - C.base_spell_f1[ci];
+    $("delta").innerHTML = `Our model is <b>${d >= 0 ? "+" : ""}${d.toFixed(2)}</b> ${d >= 0 ? "above" : "below"} the baseline on spell F1 for the minutes played so far.`;
+  }
+  $("what").innerHTML = explain(i);
+  $("lastevent").innerHTML = lastEvent(i);
+}
+
+/* ---------- playback ---------- */
+let cur = PER[0].kickoff, playing = true, speed = 2, last = 0, lastUi = 0, resumeAfterTab = false;
+const SPEEDS = [1, 2, 4, 8, 16];
+const speedBox = $("speeds");
+SPEEDS.forEach(s => {
+  const btn = document.createElement("button");
+  btn.className = "chip"; btn.textContent = s + "×"; btn.setAttribute("aria-pressed", String(s === speed));
+  btn.addEventListener("click", () => setSpeed(s));
+  speedBox.appendChild(btn);
+});
+function setSpeed(s) { speed = s; [...speedBox.children].forEach((b, k) => b.setAttribute("aria-pressed", String(SPEEDS[k] === s))); }
+function setPlaying(p) { playing = p; $("play").textContent = p ? "PAUSE" : "PLAY"; }
+function seek(i) { cur = Math.min(Math.max(i, 0), N - 1); lastUi = 0; }
+$("play").addEventListener("click", () => { if (!playing && cur >= N - 1) cur = PER[0].kickoff; setPlaying(!playing); });
+$("back").addEventListener("click", () => seek(cur - 10 * HZ));
+$("fwd").addEventListener("click", () => seek(cur + 10 * HZ));
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  zoom = b.dataset.zoom; view = null;
+  document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+}));
+document.addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input,textarea")) return;
+  if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); }
+  else if (e.code === "ArrowLeft") seek(cur - 5 * HZ);
+  else if (e.code === "ArrowRight") seek(cur + 5 * HZ);
+  else if (/^Digit[1-5]$/.test(e.code)) setSpeed(SPEEDS[+e.code.slice(5) - 1]);
+});
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  const tab = b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b)));
+  $("replay").style.display = tab === "replay" ? "" : "none";
+  $("method").style.display = tab === "method" ? "block" : "none";
+  if (tab === "method") { resumeAfterTab = playing; setPlaying(false); }
+  else { if (resumeAfterTab) setPlaying(true); requestAnimationFrame(() => { resize(); }); }
+}));
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  for (const c of [pitch, chart, strips]) {
+    const r = c.getBoundingClientRect();
+    if (r.width === 0) continue;
+    c.width = Math.round(r.width * DPR); c.height = Math.round(r.height * DPR);
+  }
+  S = pitch.width / WL;
+  drawPitchBackground();
+  view = null; lastUi = 0;
+}
+window.addEventListener("resize", resize);
+
+function loop(ts) {
+  const dt = last ? Math.min(0.1, (ts - last) / 1000) : 0; last = ts;
+  if ($("replay").style.display !== "none") {
+    if (playing) { cur += dt * HZ * speed; if (cur >= N - 1) { cur = N - 1; setPlaying(false); } }
+    const i = Math.floor(cur);
+    drawFrame(cur);
+    drawStrips(i);
+    if (ts - lastUi > 90) { updatePanels(i); drawChart(i); lastUi = ts; }
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- method tab ---------- */
+function resultsTable(title, s) {
+  const rows = [["Our model", s.model, true], ["Model without smoothing", s.model_without_smoothing, false], ["Nearest-player baseline", s.baseline_nearest_player, false]];
+  return `<table><thead><tr><th>${title}</th><th>Spell F1</th><th>Spells found</th><th>Spells predicted</th><th>Macro-F1</th><th>Accuracy</th></tr></thead><tbody>` +
+    rows.map(([name, r, ours]) => `<tr class="${ours ? "ours" : ""}"><td>${name}</td><td>${r.spell_f1.toFixed(3)}</td><td>${r.spells_matched} / ${r.spells_true}</td><td>${r.spells_pred}</td><td>${r.macro_f1.toFixed(3)}</td><td>${(100 * r.accuracy).toFixed(1)}%</td></tr>`).join("") +
+    `</tbody></table>`;
+}
+const SUM = D.summary;
+$("results").innerHTML =
+  resultsTable("Trained on game 1, tested on game 2", SUM.train_game_1_test_game_2) +
+  `<div class="caption">This is the run shown in the replay.</div>` +
+  resultsTable("Trained on game 2, tested on game 1", SUM.train_game_2_test_game_1) +
+  `<div class="caption">The same recipe the other way round, as a check that game 2 was not a lucky draw.</div>`;
+for (const [id, key] of [["lk-gh", "github"], ["ft-gh", "github"], ["lk-hf", "model"], ["ft-hf", "model"], ["lk-data", "data"]]) $(id).href = D.links[key];
+
+resize();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
