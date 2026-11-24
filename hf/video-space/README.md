@@ -9,7 +9,9 @@ license: agpl-3.0
 short_description: Football possession from a match video, in your browser
 ---
 
-Pick a football match video and the page works out which team had the ball, five times a second: the split, a timeline of every spell, and the video with each player's team and the ball marked. It all runs in your browser. The video is never uploaded.
+Pick a football match video and the page works out which team had the ball, five times a second. You get the possession split, a momentum chart, how often each team lost the ball, how many players pressed the ball carrier, the length of every spell, and the video itself with each player's team and the ball marked. The numbers beside the video follow it as it plays. You can save a picture of the result to share, and the data as CSV and JSON.
+
+The page is in Arabic and English. It all runs in your browser; the video is never uploaded.
 
 It is fastest in a browser with WebGPU, such as a recent Chrome or Edge on a laptop or desktop. Without WebGPU it runs on the processor, several times slower, so start with a few minutes of video.
 
