@@ -911,14 +911,14 @@ footer a { color: inherit; }
     args.forEach((a, i) => { s = s.split('{' + i + '}').join(String(a)); });
     return s;
   }
-  const iso = s => '⁦' + s + '⁩';          // keeps times left to right inside Arabic text
+  const iso = s => '\u2066' + s + '\u2069';          // keeps times left to right inside Arabic text
   const pct = v => Math.round(v * 100) + '%';
   const dur = v => v < 60 ? t('nSec', Math.round(v)) : iso(clockOf(v));
   const dur1 = v => !v ? '–' : v < 60 ? t('nSec', (Math.round(v * 10) / 10).toString()) : iso(clockOf(v));
   const count = n => n.toLocaleString('en');
 
   // ------------------------------------------------------------------ team names and colours
-  const MARK = '⁣';                               // names starting with this are made up by the page
+  const MARK = '\u2063';                               // names starting with this are made up by the page
   function teamLabel(k) {
     if (!R) return '';
     const name = R.teams.names[k];
@@ -1319,7 +1319,7 @@ footer a { color: inherit; }
       if (h >= 1) roundRect(g, cx - w / 2, b.value > 0 ? mm - h : mm + 1, w, h, 3, b.value > 0 ? fill[0] : fill[1]);
     });
     const stats = [[t('mLosses'), M.ball_losses.map(String)], [t('mPress'), M.pressure_on_ball.map(v => v == null ? '–' : v.toFixed(1))],
-                   [t('mLong'), S.teams.map(tm => dur1(tm.longest_spell_seconds).replace(/[⁦⁩]/g, ''))]];
+                   [t('mLong'), S.teams.map(tm => dur1(tm.longest_spell_seconds).replace(/[\u2066\u2069]/g, ''))]];
     stats.forEach(([label, vals], j) => {
       let x = S0 + toEnd * j * (bw / 3);
       g.textAlign = A; g.fillStyle = '#9aa69e'; g.font = F(400, 20); g.fillText(label, x, 564);
