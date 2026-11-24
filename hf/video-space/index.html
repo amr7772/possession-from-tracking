@@ -1,181 +1,246 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Who has the ball? Possession from a match video</title>
+<title>من يملك الكرة؟ | Who has the ball?</title>
+<meta name="description" content="استحواذ مباراة كرة القدم من الفيديو، محسوبًا داخل متصفحك. Football possession from a match video, worked out in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-.viz-root {
+:root {
   color-scheme: light;
-  --page: #f9f9f7; --surface-1: #fcfcfb;
-  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
-  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
-  --series-1: #2a78d6; --series-2: #eb6834; --on-fill: #ffffff;
+  --bg: #f3f4f1; --surface: #ffffff; --surface-2: #eef0eb; --text: #121611; --text-2: #4c5449; --text-3: #7b8478;
+  --line: rgba(18,22,17,0.10); --line-2: rgba(18,22,17,0.22);
+  --accent: #1c7a45; --accent-ink: #ffffff; --accent-soft: rgba(28,122,69,0.09);
+  --series-1: #2a78d6; --series-2: #eb6834; --none: #d5d8d0; --danger: #b42318; --warn-bg: rgba(214,153,0,0.13);
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.05);
+  --font: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) .viz-root {
+  :root {
     color-scheme: dark;
-    --page: #0d0d0d; --surface-1: #1a1a19;
-    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
-    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
-    --series-1: #3987e5; --series-2: #d95926;
+    --bg: #0b0f0c; --surface: #141a15; --surface-2: #1b221c; --text: #ecf0ea; --text-2: #b2bbb0; --text-3: #7d877b;
+    --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.18);
+    --accent: #34a866; --accent-ink: #04130a; --accent-soft: rgba(52,168,102,0.13);
+    --series-1: #3987e5; --series-2: #d95926; --none: #2f3730; --danger: #ff8f85; --warn-bg: rgba(214,153,0,0.16);
+    --shadow: none;
   }
 }
 * { box-sizing: border-box; }
-body { margin: 0; }
-.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh;
-  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 32px 16px 48px; }
-.wrap { max-width: 960px; margin: 0 auto; }
-h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
-h2 { font-size: 16px; font-weight: 600; margin: 0 0 2px; }
-.sub { color: var(--text-secondary); margin: 0 0 6px; }
-.ar { direction: rtl; text-align: right; color: var(--text-secondary); font-size: 14px; margin: 0 0 24px; }
-.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 0 0 16px; }
-.note { color: var(--text-secondary); font-size: 13px; margin: 0 0 14px; }
-.warn { border-left: 3px solid var(--axis); padding: 8px 12px; margin: 0 0 16px; color: var(--text-secondary); }
-.row { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; margin: 14px 0; }
-.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-secondary); }
-input[type=text] { font: inherit; color: var(--text-primary); background: var(--page); border: 1px solid var(--border);
-  border-radius: 8px; padding: 7px 10px; }
-#teams { width: 290px; max-width: 100%; } #from, #to { width: 96px; }
-input[type=file] { font: inherit; color: var(--text-secondary); max-width: 100%; }
-button { font: inherit; font-weight: 600; border-radius: 8px; padding: 8px 18px; border: 1px solid var(--border);
-  cursor: pointer; background: var(--surface-1); color: var(--text-primary); }
-button.primary { background: var(--text-primary); color: var(--surface-1); border-color: transparent; }
-button:disabled { opacity: .45; cursor: default; }
-.progress { height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; margin: 16px 0 8px; }
-.progress > div { height: 100%; width: 0; background: var(--series-1); transition: width .2s; }
-#status { margin: 0; color: var(--text-secondary); font-size: 14px; font-variant-numeric: tabular-nums; }
-#error { margin: 8px 0 0; color: var(--text-primary); font-size: 14px; }
-.player { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--font); }
+.app { max-width: 1120px; margin: 0 auto; padding: 22px 16px 56px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.brand svg { width: 46px; height: 46px; flex: none; color: var(--text); }
+h1 { font-size: 30px; line-height: 1.2; margin: 0; font-weight: 700; }
+.tagline { margin: 2px 0 0; color: var(--text-2); font-size: 15px; }
+h2 { font-size: 18px; line-height: 1.4; margin: 0 0 4px; font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; min-width: 0; }
+.note { color: var(--text-2); font-size: 14px; margin: 0 0 12px; }
+.sub2 { color: var(--text-2); font-size: 13px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+button { font: inherit; font-size: 15px; font-weight: 500; border-radius: 11px; padding: 9px 16px; border: 1px solid var(--line-2); background: var(--surface); color: var(--text); cursor: pointer; }
+button:hover { border-color: var(--text-3); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; padding: 11px 26px; font-size: 16px; }
+button.primary:hover { filter: brightness(1.06); }
+button:disabled { opacity: 0.45; cursor: default; filter: none; }
+button:focus-visible, input:focus-visible, select:focus-visible, .scrub:focus-visible, .drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang { font-size: 14px; padding: 6px 14px; border-radius: 999px; }
+.drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 28px 16px; border: 2px dashed var(--line-2); border-radius: 16px; background: var(--surface-2); cursor: pointer; transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop svg { width: 42px; height: 42px; color: var(--accent); margin-bottom: 4px; }
+.drop strong { font-size: 18px; font-weight: 600; }
+.drop .hint { color: var(--text-2); font-size: 14px; }
+.file-info { margin-top: 6px; font-size: 14px; font-weight: 500; color: var(--text); }
+.form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 14px; margin-top: 16px; align-items: end; }
+@media (max-width: 820px) { .form { grid-template-columns: 1fr; } }
+fieldset { border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px 12px; margin: 0; min-width: 0; }
+legend { padding: 0 6px; font-size: 13px; color: var(--text-2); }
+.team-row { display: flex; gap: 8px; }
+input[type=text], select { font: inherit; font-size: 15px; color: var(--text); background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.team-row input { flex: 1; }
+.team-row select { width: 128px; flex: none; }
+.range { display: flex; gap: 10px; }
+.range label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-2); }
+.range input { width: 96px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+.progress-wrap { margin-top: 16px; }
+.progress { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.progress > div { height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+.status-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; margin-top: 8px; font-size: 14px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.chip { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--text-2); white-space: nowrap; }
+.error { margin: 12px 0 0; padding: 10px 14px; border-radius: 12px; background: rgba(180,35,24,0.09); color: var(--danger); font-size: 14px; }
+.privacy { margin: 14px 0 0; font-size: 13px; color: var(--text-3); display: flex; gap: 6px; align-items: center; }
+.privacy svg { width: 15px; height: 15px; flex: none; }
+.score { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; }
+.side { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.side.b { justify-content: flex-end; }
+.side .who { min-width: 0; }
+.kit { width: 22px; height: 22px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(128,128,128,0.6); display: inline-block; }
+.kit.sm { width: 12px; height: 12px; vertical-align: -1px; }
+.tname { font-size: 19px; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pct { font-size: 52px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.mid { text-align: center; color: var(--text-2); font-size: 13px; line-height: 1.5; }
+.split { display: flex; gap: 3px; height: 12px; margin-top: 16px; }
+.split > div, .mini-split > div { border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(128,128,128,0.45); min-width: 2px; }
+.score-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; margin-top: 10px; }
+.swap { font-size: 13px; padding: 4px 12px; white-space: nowrap; }
+@media (max-width: 640px) {
+  .score { gap: 6px; align-items: start; }
+  .side { flex-wrap: wrap; gap: 4px 8px; }
+  .side .pct { order: 3; flex-basis: 100%; font-size: 38px; }
+  .side.b .pct { text-align: end; }
+  .tname { font-size: 15px; }
+  .kit { width: 14px; height: 14px; }
+  .mid { padding-top: 2px; font-size: 12px; }
+}
+.warn { padding: 10px 14px; border-radius: 12px; background: var(--warn-bg); font-size: 14px; margin-bottom: 16px; }
+.stage { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 900px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.player { position: relative; background: #000; border-radius: 12px; overflow: hidden; cursor: pointer; }
 .player video { display: block; width: 100%; height: auto; }
-.player:fullscreen video { height: 100%; object-fit: contain; }
+.player:fullscreen { display: flex; align-items: center; border-radius: 0; }
+.player:fullscreen video { width: 100%; height: 100%; object-fit: contain; }
 .player canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.player-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
-.split { display: flex; gap: 2px; height: 28px; margin: 14px 0 10px; }
-.split .seg { border-radius: 4px; color: var(--on-fill); font-weight: 600; font-size: 14px;
-  display: flex; align-items: center; padding-left: 8px; white-space: nowrap; outline-offset: 2px; }
-.split .seg:hover, .split .seg:focus { filter: brightness(1.08); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--text-primary); font-size: 14px; }
+.controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.icon-btn { width: 40px; height: 40px; padding: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; font-variant-numeric: tabular-nums; }
+.icon-btn svg { width: 18px; height: 18px; }
+.clock { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scrub { flex: 1; min-width: 60px; height: 36px; position: relative; cursor: pointer; touch-action: none; border-radius: 8px; }
+.scrub svg { display: block; width: 100%; height: 100%; }
+.player-note { margin: 10px 0 0; font-size: 13px; color: var(--text-2); }
+.live { display: flex; flex-direction: column; gap: 18px; }
+.live .label { font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+.now { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 600; line-height: 1.3; min-height: 32px; }
+.now .muted { color: var(--text-3); }
+.mini-split { display: flex; gap: 2px; height: 10px; margin: 6px 0 6px; }
+.mini-row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.mini-row span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+@media (max-width: 820px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .metrics { grid-template-columns: minmax(0, 1fr); } }
+.metric { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
+.m-title { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
+.m-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; line-height: 1.9; }
+.m-row .m-name { display: inline-flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-row b { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.m-one { font-size: 26px; font-weight: 600; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.m-hint { font-size: 12px; color: var(--text-3); margin-top: 6px; line-height: 1.5; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-svg text { fill: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-svg .lane-label { fill: var(--text-secondary); font-size: 13px; font-variant-numeric: normal; }
 .chart { position: relative; }
-.tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
-  border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  display: none; white-space: nowrap; z-index: 2; }
-.tip b { font-weight: 600; }
-.tip .row2 { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
-.tip .row2 b { color: var(--text-primary); }
-.tip .key { width: 12px; height: 2px; border-radius: 1px; display: inline-block; }
-.tip .when { color: var(--text-muted); margin-bottom: 2px; }
+.chart svg { display: block; }
+.chart svg text { fill: var(--text-3); font-size: 12px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,0.14); display: none; white-space: nowrap; z-index: 3; }
+.tip .t-row { display: flex; align-items: center; gap: 6px; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--grid); }
-th { color: var(--text-secondary); font-weight: 500; }
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.chip { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: -1px;
-  box-shadow: 0 0 0 1px var(--axis); margin-right: 6px; }
-details { margin-top: 12px; }
-summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
-details table { margin-top: 8px; }
-.scroll { max-height: 320px; overflow: auto; }
-.method p { margin: 0 0 8px; color: var(--text-secondary); font-size: 14px; }
-.method ul { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: 14px; }
-.downloads { display: flex; flex-wrap: wrap; gap: 10px; }
-footer { color: var(--text-muted); font-size: 13px; margin-top: 24px; }
-a { color: inherit; }
+th, td { text-align: start; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--text-2); font-weight: 500; }
+td.num, th.num { text-align: end; font-variant-numeric: tabular-nums; }
+details summary { cursor: pointer; color: var(--text-2); font-size: 14px; margin-top: 4px; }
+.scroll { max-height: 340px; overflow: auto; margin-top: 8px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.method p, .method li { color: var(--text-2); font-size: 14px; }
+.method ul { padding-inline-start: 20px; margin: 10px 0; }
+footer { color: var(--text-3); font-size: 13px; margin-top: 26px; line-height: 1.9; }
+footer a { color: inherit; }
 </style>
 </head>
 <body>
-<div class="viz-root">
-<div class="wrap">
-  <h1>Who has the ball?</h1>
-  <p class="sub">Possession from a football match video, worked out in your browser. The video stays on your computer: nothing is uploaded.</p>
-  <p class="ar" lang="ar">تحليل الاستحواذ من فيديو المباراة داخل متصفحك: اختر الفيديو ثم اضغط Analyse. لا يُرفع الفيديو إلى أي خادم، بل يبقى على جهازك. يمكنك كتابة الفريقين بالعربية، مثل: الزمالك=أبيض، الأهلي=أحمر.</p>
-
-  <section class="card">
-    <h2>Choose a match video</h2>
-    <p class="note">MP4 works best. With WebGPU (a recent Chrome or Edge) the analysis takes one to two times as long as the video; without it, several times longer. Try a clip of a few minutes first, and keep this tab open while it runs.</p>
-    <input type="file" id="file" accept="video/*" aria-label="Match video">
-    <p class="note" id="file-info" style="margin-top:8px"></p>
-    <div class="row">
-      <label class="field">Teams and shirt colours (optional)
-        <input type="text" id="teams" dir="auto" placeholder="Zamalek=white, Al Ahly=red" autocomplete="off"></label>
-      <label class="field">From (m:ss)<input type="text" id="from" placeholder="0:00" autocomplete="off"></label>
-      <label class="field">To (m:ss)<input type="text" id="to" placeholder="end" autocomplete="off"></label>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="28" r="15" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M24 21.5l6 4.4-2.3 7h-7.4l-2.3-7z" fill="currentColor"/><path d="M24 2.5l6.5 8.5h-13z" fill="var(--accent)"/></svg>
+      <div><h1 data-t="title"></h1><p class="tagline" data-t="tagline"></p></div>
     </div>
-    <div class="row" style="margin-bottom:0">
-      <button class="primary" id="go" disabled>Analyse</button>
-      <button id="stop" hidden>Stop and show what is done</button>
-    </div>
-    <div class="progress" id="progress" hidden role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Analysis progress"><div></div></div>
-    <p id="status" aria-live="polite"></p>
-    <p id="error" hidden></p>
-  </section>
+    <button class="lang" id="lang" type="button"></button>
+  </header>
 
-  <section class="card" id="player-card" hidden>
-    <h2>The video, marked</h2>
-    <p class="note">A ring at each player's feet shows the team; the triangle is the ball, filled with the colour of the team that has it.</p>
-    <div class="player" id="player-box">
-      <video id="player" controls playsinline controlslist="nofullscreen"></video>
-      <canvas id="overlay"></canvas>
-    </div>
-    <div class="player-bar">
-      <span class="note" style="margin:0">Marks appear for the stretch that was analysed.</span>
-      <button id="full">Full screen</button>
-    </div>
-  </section>
-
-  <div id="report" hidden>
-    <p class="sub" id="report-sub"></p>
-    <div class="warn" id="warn" hidden></div>
-
-    <section class="card">
-      <h2>Possession</h2>
-      <p class="note">Share of the time either team had the ball. Time with nobody on the ball is left out. Chart colours mark the teams; the shirt colours are in the table below.</p>
-      <div class="split" id="split" role="img"></div>
-      <div class="legend" id="legend"></div>
-    </section>
-
-    <section class="card">
-      <h2>When each team had the ball</h2>
-      <p class="note">Each block is one spell of possession. Gaps are moments with nobody on the ball, or the ball out of view.</p>
-      <div class="chart" id="timeline" role="img"></div>
-      <details><summary>Table view: every spell</summary><div class="scroll"><table id="spells-table"></table></div></details>
-    </section>
-
-    <section class="card" id="blocks-card" hidden>
-      <h2>Possession over the match</h2>
-      <p class="note" id="blocks-note"></p>
-      <div class="legend" id="legend2" style="margin-bottom:8px"></div>
-      <div class="chart" id="blocks" role="img"></div>
-      <details><summary>Table view</summary><table id="blocks-table"></table></details>
-    </section>
-
-    <section class="card">
-      <h2>Numbers</h2>
-      <table id="stats"></table>
-      <div class="downloads" style="margin-top:14px">
-        <button id="dl-csv">Download possession.csv</button>
-        <button id="dl-json">Download summary.json</button>
+  <section class="card" id="setup">
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="video/*" class="sr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+      <strong data-t="dropTitle"></strong>
+      <span class="hint" data-t="dropSub"></span>
+      <span class="file-info" id="file-info"></span>
+    </label>
+    <div class="form">
+      <fieldset><legend data-t="teamAField"></legend>
+        <div class="team-row"><input type="text" id="nameA" dir="auto" autocomplete="off" data-tp="namePhA"><select id="colourA"></select></div>
+      </fieldset>
+      <fieldset><legend data-t="teamBField"></legend>
+        <div class="team-row"><input type="text" id="nameB" dir="auto" autocomplete="off" data-tp="namePhB"><select id="colourB"></select></div>
+      </fieldset>
+      <div class="range">
+        <label><span data-t="from"></span><input type="text" id="from" class="ltr" placeholder="0:00" autocomplete="off"></label>
+        <label><span data-t="to"></span><input type="text" id="to" class="ltr" data-tp="toPh" autocomplete="off"></label>
       </div>
-    </section>
+    </div>
+    <div class="actions">
+      <button class="primary" id="go" type="button" disabled data-t="analyse"></button>
+      <button id="stop" type="button" hidden data-t="stop"></button>
+    </div>
+    <div class="progress-wrap" id="progress-wrap" hidden>
+      <div class="progress" id="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div></div></div>
+      <div class="status-row"><span id="status" aria-live="polite"></span><span class="chip" id="backend" hidden></span></div>
+    </div>
+    <p class="error" id="error" hidden></p>
+    <p class="privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-t="privacy"></span></p>
+  </section>
 
-    <section class="card method">
-      <h2>How this was measured</h2>
-      <p>Five times a second, a detector found the players and the ball in the picture. Players were split into two teams by shirt colour; the team whose nearest player was closest to the ball, measured in player heights, got that moment, and a hidden Markov model smoothed the sequence so a single frame cannot flip possession.</p>
+  <section id="dash" hidden>
+    <div class="card">
+      <div class="score" id="score"></div>
+      <div class="split" id="split" role="img"></div>
+      <div class="score-foot"><span class="sub2" id="score-sub"></span><button class="swap" id="swap" type="button" data-t="swap"></button></div>
+    </div>
+    <div class="warn" id="warn" hidden></div>
+    <div class="stage">
+      <div class="card" style="padding: 14px;">
+        <div class="player" id="player-box"><video id="player" playsinline preload="auto"></video><canvas id="overlay"></canvas></div>
+        <div class="controls">
+          <button class="icon-btn" id="play" type="button"></button>
+          <span class="clock ltr" id="clock">0:00</span>
+          <div class="scrub" id="scrub" role="slider" tabindex="0"></div>
+          <button class="icon-btn" id="speed" type="button">1×</button>
+          <button class="icon-btn" id="full" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg></button>
+        </div>
+        <p class="player-note" data-t="playerNote"></p>
+      </div>
+      <aside class="card live" id="live" aria-live="off"></aside>
+    </div>
+    <div class="card">
+      <h2 data-t="momentum"></h2>
+      <p class="note" id="momentum-note"></p>
+      <div class="legend" id="momentum-legend"></div>
+      <div class="chart" id="momentum"></div>
+    </div>
+    <div class="metrics" id="metrics"></div>
+    <div class="card">
+      <h2 data-t="spellsTitle"></h2>
+      <details><summary data-t="spellsShow"></summary><div class="scroll"><table id="spells-table"></table></div></details>
+    </div>
+    <div class="card">
+      <h2 data-t="saveTitle"></h2>
+      <div class="toolbar">
+        <button id="dl-png" type="button" data-t="dlPng"></button>
+        <button id="dl-csv" type="button" data-t="dlCsv"></button>
+        <button id="dl-json" type="button" data-t="dlJson"></button>
+        <button id="again" type="button" data-t="again"></button>
+      </div>
+    </div>
+    <div class="card method">
+      <h2 data-t="methodTitle"></h2>
+      <p data-t="method1"></p>
       <ul id="quality"></ul>
-      <p style="margin-top:8px">Limits: these numbers have not been checked against an event log yet, so read them as a first estimate. Distances are measured in the picture, so a ball passing in front of a player can count as near him. Goalkeepers and referees are never given the ball; while a keeper holds it, possession stays with the last team seen on it. Replays and close-ups count as time with nobody on the ball only when the grass leaves the picture.</p>
-    </section>
-  </div>
+      <p data-t="limits"></p>
+    </div>
+  </section>
 
-  <footer>
-    Method and code: <a href="https://github.com/amr7772/possession-from-tracking">github.com/amr7772/possession-from-tracking</a>.
-    The same project on tracking data: <a href="https://huggingface.co/spaces/amreleraqi09/possession-from-tracking">the replay</a>.
-    The detector is YOLO26s by Ultralytics (AGPL-3.0), run with ONNX Runtime Web.
-  </footer>
-</div>
+  <footer id="footer"></footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/ort.webgpu.min.js"></script>
 <script>
@@ -203,10 +268,6 @@ a { color: inherit; }
     alpha: 1.0, stickiness: 2,
   };
 
-  const $ = id => document.getElementById(id);
-  const fileInput = $('file'), goBtn = $('go'), stopBtn = $('stop');
-  const statusEl = $('status'), errorEl = $('error'), progress = $('progress');
-  const player = $('player'), overlay = $('overlay');
   let videoURL = null, videoMeta = null, running = false, cancelled = false, session = null, backend = '';
   let R = null;                                  // the last result: samples, states, teams, summary
 
@@ -218,13 +279,6 @@ a { color: inherit; }
     const parts = text.split(':').map(Number);
     if (parts.some(isNaN)) return NaN;
     return parts.reduce((acc, v) => acc * 60 + v, 0);
-  }
-  function showError(msg) { errorEl.hidden = !msg; errorEl.textContent = msg || ''; }
-  function setProgress(frac, text) {
-    progress.hidden = false;
-    progress.firstElementChild.style.width = (100 * Math.max(0, Math.min(1, frac))).toFixed(1) + '%';
-    progress.setAttribute('aria-valuenow', String(Math.round(100 * frac)));
-    if (text != null) statusEl.textContent = text;
   }
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -407,15 +461,15 @@ a { color: inherit; }
     catch (e) { cache = null; }
     if (!bytes) {
       const res = await fetch(MODEL_URL);
-      if (!res.ok) throw new Error('Could not download the detector (' + res.status + ').');
+      if (!res.ok) throw fail('errModel', res.status);
       let total = Number(res.headers.get('content-length')) || MODEL_MB * 1e6;
       const reader = res.body.getReader(); const chunks = []; let got = 0;
       for (;;) { const {done, value} = await reader.read(); if (done) break; chunks.push(value); got += value.length; total = Math.max(total, got);
-        setProgress(got / total * 0.1, 'Downloading the detector: ' + (got / 1e6).toFixed(0) + ' of ' + (total / 1e6).toFixed(0) + ' MB (only the first time)'); }
+        setProgress(got / total * 0.1, t('dlModel', (got / 1e6).toFixed(0), (total / 1e6).toFixed(0))); }
       bytes = new Uint8Array(got); let off = 0; for (const c of chunks) { bytes.set(c, off); off += c.length; }
       if (cache) { try { await cache.put(MODEL_URL, new Response(bytes, {headers: {'content-type': 'application/octet-stream'}})); } catch (e) { /* storage full or blocked */ } }
     }
-    setProgress(0.1, 'Starting the detector...');
+    setProgress(0.1, t('startModel'));
     ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1;
     if (navigator.gpu) {
       try { session = await ort.InferenceSession.create(bytes, {executionProviders: ['webgpu'], graphOptimizationLevel: 'all'}); backend = 'WebGPU'; }
@@ -427,10 +481,10 @@ a { color: inherit; }
 
   function seek(video, t) {
     return new Promise((resolve, reject) => {
-      const ok = () => { cleanup(); resolve(); }, bad = () => { cleanup(); reject(new Error('The browser could not read this video.')); };
-      const timer = setTimeout(() => { cleanup(); reject(new Error('The browser could not jump to ' + clockOf(t) + ' in this video. Try an MP4 (H.264) file.')); }, 15000);
+      const ok = () => { cleanup(); resolve(); }, bad = () => { cleanup(); reject(fail('errRead')); };
+      const timer = setTimeout(() => { cleanup(); reject(fail('errSeek', clockOf(t))); }, 15000);
       const cleanup = () => { clearTimeout(timer); video.removeEventListener('seeked', ok); video.removeEventListener('error', bad); };
-      if (Math.abs(video.currentTime - t) < 1e-4 && video.readyState >= 2) { resolve(); return; }
+      if (Math.abs(video.currentTime - t) < 1e-4 && video.readyState >= 2) { cleanup(); resolve(); return; }
       video.addEventListener('seeked', ok); video.addEventListener('error', bad);
       video.currentTime = t;
     });
@@ -465,17 +519,23 @@ a { color: inherit; }
     const input = new Float32Array(3 * IN_W * IN_H), plane = IN_W * IN_H;
     const n = Math.max(1, Math.floor((t1 - t0) * HZ + 1e-9));
     const samples = [], started = performance.now();
+    const target = k => Math.min(t0 + k / HZ + 0.001, Math.max(0, video.duration - 0.001));
+    let pending = seek(video, target(0));
     for (let k = 0; k < n; k++) {
       if (cancelled) break;
       const t = t0 + k / HZ;
-      await seek(video, Math.min(t + 0.001, Math.max(0, video.duration - 0.001)));
+      await pending;
       bctx.drawImage(video, lb.left, lb.top, nw, nh);
       sctx.drawImage(video, 0, 0, sw, sh);
+      // The next frame decodes while this one is analysed.
+      pending = k + 1 < n ? seek(video, target(k + 1)) : null;
+      if (pending) pending.catch(() => {});
       const px = bctx.getImageData(0, 0, IN_W, IN_H).data;
       for (let i = 0, j = 0; i < plane; i++, j += 4) { input[i] = px[j] / 255; input[plane + i] = px[j + 1] / 255; input[2 * plane + i] = px[j + 2] / 255; }
-      const out = await session.run({images: new ort.Tensor('float32', input, [1, 3, IN_H, IN_W])});
+      const inference = session.run({images: new ort.Tensor('float32', input, [1, 3, IN_H, IN_W])});
+      const pm = pitchMask(sctx.getImageData(0, 0, sw, sh).data, sw, sh);   // the processor works while the detector runs
+      const out = await inference;
       const det = out[session.outputNames[0]].data;
-      const pm = pitchMask(sctx.getImageData(0, 0, sw, sh).data, sw, sh);
       const s = {t, share: pm.share, people: [], ball: null, ballConf: 0};
       let best = -1;
       for (let q = 0; q < det.length / 6; q++) {
@@ -674,185 +734,454 @@ a { color: inherit; }
     };
   }
 
-  // ------------------------------------------------------------------ report
-  let drawReport = null;
-  function renderReport(D) {
-    const SERIES = ['var(--series-1)', 'var(--series-2)'], STATES = ['team_a', 'team_b'], T = D.teams;
-    const t0 = D.spells.length ? D.spells[0].start : 0;
-    const pct = v => (v * 100).toFixed(0) + '%';
-    const fine = D.duration_seconds < 600;
-    const clock = s => { s = Math.max(0, fine ? Math.round(s * 10) / 10 : Math.round(s));
-      const m = Math.floor(s / 60), r = s - m * 60;
-      return String(m).padStart(2, '0') + ':' + (r < 10 ? '0' : '') + (fine && r % 1 ? r.toFixed(1) : r.toFixed(0)); };
-    const el = (tag, attrs, text) => { const e = document.createElement(tag);
-      for (const k in attrs || {}) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
-    const svgEl = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-      for (const k in attrs || {}) e.setAttribute(k, attrs[k]); return e; };
-    for (const id of ['split', 'legend', 'legend2', 'timeline', 'spells-table', 'blocks', 'blocks-table', 'stats', 'quality']) $(id).replaceChildren();
-    $('report').hidden = false;
-    const mins = D.duration_seconds / 60;
-    $('report-sub').textContent = D.video + ' · ' + (mins >= 1 ? mins.toFixed(0) + ' min' : D.duration_seconds.toFixed(0) + ' s') +
-      ' of video, looked at ' + D.rate_hz + ' times a second';
-    const w = $('warn'); w.hidden = !D.warning; w.textContent = D.warning || '';
 
-    function tooltip(host) {
-      const tip = el('div', {class: 'tip'}); host.appendChild(tip);
-      return {
-        show(x, y, when, rows, below) {
-          tip.replaceChildren();
-          if (when) tip.appendChild(el('div', {class: 'when'}, when));
-          for (const r of rows) { const row = el('div', {class: 'row2'});
-            if (r.colour) { const k = el('i', {class: 'key'}); k.style.background = r.colour; row.appendChild(k); }
-            row.appendChild(el('b', {}, r.value)); row.appendChild(document.createTextNode(r.label)); tip.appendChild(row); }
-          tip.style.display = 'block';
-          const hw = host.clientWidth, tw = tip.offsetWidth;
-          tip.style.left = Math.min(Math.max(0, x + 12), hw - tw) + 'px';
-          tip.style.top = (below ? y + 8 : Math.max(0, y - tip.offsetHeight - 10)) + 'px';
-        },
-        hide() { tip.style.display = 'none'; }
-      };
+  // ------------------------------------------------------------------ more measures from the same frames
+  const PRESS_RADIUS = 1.5;                     // in player heights
+  function cumulativeLosses(states) {          // balls lost by each team up to each frame
+    const out = new Array(states.length), lost = [0, 0]; let last = -1;
+    for (let i = 0; i < states.length; i++) {
+      const s = states[i];
+      if (s === TEAM_A || s === TEAM_B) { if (last !== -1 && s !== last) lost[last]++; last = s; }
+      out[i] = [lost[0], lost[1]];
     }
-
-    // 1. Tall segmented bar
-    const split = $('split');
-    split.setAttribute('aria-label', 'Possession: ' + T.map(t => t.name + ' ' + pct(t.possession)).join(', '));
-    split.parentElement.querySelectorAll('.tip').forEach(t => t.remove());
-    const splitTip = tooltip(split.parentElement); split.parentElement.style.position = 'relative';
-    T.forEach((t, k) => {
-      if (t.possession <= 0) return;
-      const seg = el('div', {class: 'seg', tabindex: '0', 'aria-label': t.name + ': ' + pct(t.possession) + ', ' + clock(t.seconds_on_ball) + ' on the ball'});
-      seg.style.flex = String(t.possession); seg.style.background = SERIES[k];
-      seg.appendChild(el('span', {}, pct(t.possession))); split.appendChild(seg);
-      const show = () => { const r = seg.getBoundingClientRect(), h = split.parentElement.getBoundingClientRect();
-        splitTip.show(r.left - h.left, r.top - h.top, null, [{value: pct(t.possession), label: t.name + ', ' + clock(t.seconds_on_ball) + ' on the ball', colour: SERIES[k]}]); };
-      seg.addEventListener('pointerenter', show); seg.addEventListener('focus', show);
-      seg.addEventListener('pointerleave', splitTip.hide); seg.addEventListener('blur', splitTip.hide);
-    });
-    requestAnimationFrame(() => split.querySelectorAll('.seg').forEach(seg => { const span = seg.firstChild; if (span && span.offsetWidth + 16 > seg.clientWidth) span.remove(); }));
-    for (const id of ['legend', 'legend2']) T.forEach((t, k) => { const s = el('span'); const i = el('i'); i.style.background = SERIES[k];
-      s.appendChild(i); s.appendChild(document.createTextNode(t.name)); $(id).appendChild(s); });
-
-    function ticks(a, b, maxN) {
-      const steps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
-      const span = b - a, st = steps.find(s => span / s <= maxN) || 3600;
-      const out = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + 1e-9; v += st) out.push(v); return out;
-    }
-
-    // 2. Timeline: one lane per team
-    const tl = $('timeline'), tlTip = tooltip(tl);
-    function drawTimeline() {
-      tl.querySelectorAll('svg').forEach(s => s.remove());
-      const W = tl.clientWidth, labelW = Math.min(150, Math.max(90, W * 0.18)), right = 8, laneH = 18, laneGap = 12, top = 6, axisH = 24;
-      const H = top + 2 * laneH + laneGap + axisH + 6, a = t0, b = t0 + D.duration_seconds;
-      const x = v => labelW + (v - a) / (b - a || 1) * (W - labelW - right);
-      const svg = svgEl('svg', {width: W, height: H, viewBox: '0 0 ' + W + ' ' + H}), axisY = top + 2 * laneH + laneGap + 6;
-      for (const v of ticks(a, b, Math.max(3, Math.floor((W - labelW) / 90)))) {
-        svg.appendChild(svgEl('line', {x1: x(v), x2: x(v), y1: top - 2, y2: axisY, stroke: 'var(--grid)', 'stroke-width': 1}));
-        const anchor = x(v) > W - right - 24 ? 'end' : 'middle';
-        const tx = svgEl('text', {x: anchor === 'end' ? W - right : x(v), y: axisY + 16, 'text-anchor': anchor}); tx.textContent = clock(v); svg.appendChild(tx);
-      }
-      svg.appendChild(svgEl('line', {x1: labelW, x2: W - right, y1: axisY, y2: axisY, stroke: 'var(--axis)', 'stroke-width': 1}));
-      T.forEach((t, k) => {
-        const y = top + k * (laneH + laneGap), lab = svgEl('text', {x: 0, y: y + laneH / 2 + 4, class: 'lane-label'});
-        lab.textContent = t.name.length > 18 ? t.name.slice(0, 17) + '…' : t.name; svg.appendChild(lab);
-        for (const s of D.spells) { if (s.state !== STATES[k]) continue; const x1 = x(s.start), ww = Math.max(1, x(s.end) - x1);
-          svg.appendChild(svgEl('rect', {x: x1, y, width: ww, height: laneH, rx: Math.min(2, ww / 2), fill: SERIES[k]})); }
-      });
-      const cross = svgEl('line', {y1: top - 2, y2: axisY, stroke: 'var(--text-muted)', 'stroke-width': 1, visibility: 'hidden'}); svg.appendChild(cross);
-      const hit = svgEl('rect', {x: labelW, y: 0, width: W - labelW - right, height: axisY, fill: 'transparent', tabindex: '0'}); svg.appendChild(hit);
-      const step = 1 / D.rate_hz;
-      function at(v) {
-        v = Math.round((v - a) / step) * step + a;
-        const s = D.spells.find(s => v >= s.start && v < s.end) || D.spells[D.spells.length - 1];
-        cross.setAttribute('x1', x(v)); cross.setAttribute('x2', x(v)); cross.setAttribute('visibility', 'visible');
-        const k = STATES.indexOf(s.state);
-        tlTip.show(x(v), axisY + 20, clock(v), k >= 0 ? [{value: T[k].name, label: ' has the ball (' + s.seconds.toFixed(1) + ' s spell)', colour: SERIES[k]}]
-          : [{value: 'Nobody', label: ' on the ball'}], true);
-      }
-      hit.addEventListener('pointermove', e => { const r = svg.getBoundingClientRect(); at(a + (e.clientX - r.left - labelW) / (W - labelW - right) * (b - a)); });
-      hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); tlTip.hide(); });
-      hit.addEventListener('click', e => { const r = svg.getBoundingClientRect(); player.currentTime = a + (e.clientX - r.left - labelW) / (W - labelW - right) * (b - a); });
-      let kv = a;
-      hit.addEventListener('focus', () => at(kv));
-      hit.addEventListener('blur', () => { cross.setAttribute('visibility', 'hidden'); tlTip.hide(); });
-      hit.addEventListener('keydown', e => { const jump = Math.max(step, (b - a) / 50);
-        if (e.key === 'ArrowRight') { kv = Math.min(b - step, kv + jump); at(kv); e.preventDefault(); }
-        if (e.key === 'ArrowLeft') { kv = Math.max(a, kv - jump); at(kv); e.preventDefault(); } });
-      tl.prepend(svg);
-    }
-    tl.setAttribute('aria-label', 'Possession timeline: ' + T.map(t => t.name + ' ' + t.spells + ' spells').join(', '));
-    const st = $('spells-table');
-    st.appendChild(el('tr')).append(el('th', {}, 'From'), el('th', {}, 'To'), el('th', {}, 'Ball'), el('th', {class: 'num'}, 'Seconds'));
-    for (const s of D.spells) { const k = STATES.indexOf(s.state);
-      st.appendChild(el('tr')).append(el('td', {}, clock(s.start)), el('td', {}, clock(s.end)), el('td', {}, k >= 0 ? T[k].name : 'Nobody'),
-        el('td', {class: 'num'}, s.seconds.toFixed(1))); }
-
-    // 3. Possession per block: 100% stacked columns (only with enough blocks)
-    function roundTop(x0, top, ww, bottom, r) {
-      return 'M' + x0 + ',' + bottom + 'V' + (top + r) + 'Q' + x0 + ',' + top + ' ' + (x0 + r) + ',' + top +
-        'H' + (x0 + ww - r) + 'Q' + (x0 + ww) + ',' + top + ' ' + (x0 + ww) + ',' + (top + r) + 'V' + bottom + 'Z';
-    }
-    const blocks = D.blocks.filter(b => b.team_a !== null), bc = $('blocks'), bTip = tooltip(bc);
-    function drawBlocks() {
-      bc.querySelectorAll('svg').forEach(s => s.remove());
-      const W = bc.clientWidth, left = 40, right = 8, top = 8, plotH = 160, axisH = 24, H = top + plotH + axisH;
-      const svg = svgEl('svg', {width: W, height: H, viewBox: '0 0 ' + W + ' ' + H}), y = v => top + (1 - v) * plotH;
-      for (const v of [0, 0.5, 1]) { svg.appendChild(svgEl('line', {x1: left, x2: W - right, y1: y(v), y2: y(v), stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1}));
-        const tx = svgEl('text', {x: left - 6, y: y(v) + 4, 'text-anchor': 'end'}); tx.textContent = pct(v); svg.appendChild(tx); }
-      const n = D.blocks.length, slot = (W - left - right) / n, bw = Math.min(24, slot * 0.6), every = Math.ceil(n / Math.max(2, Math.floor((W - left) / 70)));
-      D.blocks.forEach((blk, i) => {
-        const cx = left + slot * (i + 0.5);
-        if (i % every === 0) { const tx = svgEl('text', {x: cx, y: top + plotH + 16, 'text-anchor': 'middle'}); tx.textContent = clock(blk.start); svg.appendChild(tx); }
-        if (blk.team_a === null) return;
-        const xa = cx - bw / 2, ya = y(blk.team_a), r = 4, segs = [{k: 0, path: 'M' + xa + ',' + y(0) + 'V' + ya + 'H' + (xa + bw) + 'V' + y(0) + 'Z'}];
-        const yb = y(1), yb1 = Math.max(yb, ya - 2);
-        if (blk.team_b > 0 && yb1 - yb > 0.5) segs.push({k: 1, path: roundTop(xa, yb, bw, yb1, Math.min(r, (yb1 - yb) / 2))});
-        else if (blk.team_a > 0) segs[0].path = roundTop(xa, ya, bw, y(0), Math.min(r, (y(0) - ya) / 2));
-        const rows = [{value: pct(blk.team_a), label: ' ' + T[0].name, colour: SERIES[0]}, {value: pct(blk.team_b), label: ' ' + T[1].name, colour: SERIES[1]}];
-        for (const s of segs) { if (s.k === 0 && blk.team_a <= 0) continue;
-          const p = svgEl('path', {d: s.path, fill: SERIES[s.k], tabindex: '0'});
-          const show = () => bTip.show(cx, s.k === 0 ? ya : yb, clock(blk.start) + '–' + clock(blk.end), rows);
-          p.addEventListener('pointerenter', show); p.addEventListener('focus', show); p.addEventListener('pointerleave', bTip.hide); p.addEventListener('blur', bTip.hide);
-          svg.appendChild(p); }
-        const hitR = svgEl('rect', {x: cx - slot / 2, y: top, width: slot, height: plotH, fill: 'transparent'});
-        hitR.addEventListener('pointerenter', () => bTip.show(cx, ya, clock(blk.start) + '–' + clock(blk.end), rows));
-        hitR.addEventListener('pointerleave', bTip.hide); svg.insertBefore(hitR, svg.firstChild);
-      });
-      bc.prepend(svg);
-    }
-    $('blocks-card').hidden = blocks.length < 4;
-    if (blocks.length >= 4) {
-      const bs = D.block_seconds;
-      $('blocks-note').textContent = 'Possession split in each ' + (bs >= 60 ? (bs / 60) + '-minute' : bs + '-second') + ' block.';
-      bc.setAttribute('aria-label', 'Possession by block of ' + bs + ' seconds; values in the table view');
-      const bt = $('blocks-table');
-      bt.appendChild(el('tr')).append(el('th', {}, 'From'), el('th', {}, 'To'), el('th', {class: 'num'}, T[0].name), el('th', {class: 'num'}, T[1].name));
-      for (const blk of D.blocks) bt.appendChild(el('tr')).append(el('td', {}, clock(blk.start)), el('td', {}, clock(blk.end)),
-        el('td', {class: 'num'}, blk.team_a === null ? '–' : pct(blk.team_a)), el('td', {class: 'num'}, blk.team_b === null ? '–' : pct(blk.team_b)));
-    }
-
-    // 4. Numbers
-    const tb = $('stats');
-    tb.appendChild(el('tr')).append(el('th', {}, 'Team'), el('th', {}, 'Shirts seen'), el('th', {class: 'num'}, 'Possession'),
-      el('th', {class: 'num'}, 'On the ball'), el('th', {class: 'num'}, 'Spells'), el('th', {class: 'num'}, 'Longest spell'));
-    T.forEach((t, k) => {
-      const name = el('td'), key = el('i', {class: 'chip'}); key.style.background = SERIES[k]; key.style.borderRadius = '3px'; key.style.boxShadow = 'none';
-      name.append(key, document.createTextNode(t.name));
-      const kit = el('td'), chip = el('i', {class: 'chip'}); chip.style.background = t.colour; kit.append(chip, document.createTextNode(t.colour));
-      tb.appendChild(el('tr')).append(name, kit, el('td', {class: 'num'}, pct(t.possession)), el('td', {class: 'num'}, clock(t.seconds_on_ball)),
-        el('td', {class: 'num'}, String(t.spells)), el('td', {class: 'num'}, t.longest_spell_seconds.toFixed(1) + ' s'));
-    });
-    [['Frames analysed', D.frames_analysed.toLocaleString()], ['Ball found by the detector', pct(D.ball_seen_share) + ' of frames'],
-     ['Ball position filled in over short gaps', pct(D.ball_filled_share) + ' of frames'],
-     ['No pitch in view (close-ups, crowd)', pct(D.no_pitch_view_share) + ' of frames'],
-     ['Time with nobody on the ball', clock(D.seconds_no_possession)], ['Detector', D.detector]]
-      .forEach(([k, v]) => $('quality').appendChild(el('li', {}, k + ': ' + v)));
-
-    drawReport = () => { drawTimeline(); if (blocks.length >= 4) drawBlocks(); };
-    drawReport();
+    return out;
   }
-  let resizeTimer;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (drawReport) drawReport(); drawOverlay(); }, 120); });
+  function pressure(samples, states, pos) {     // players of each team near the ball while the other team has it
+    const sum = [0, 0], cnt = [0, 0];
+    samples.forEach((s, i) => {
+      const st = states[i], b = pos[i];
+      if (!b || (st !== TEAM_A && st !== TEAM_B)) return;
+      const opp = 1 - st; let c = 0;
+      for (const p of s.people) if (p.team === opp) { const h = Math.max(1, p.box[3] - p.box[1]); if (rectDistance(b[0], b[1], p.box) / h < PRESS_RADIUS) c++; }
+      sum[opp] += c; cnt[opp]++;
+    });
+    return [0, 1].map(k => cnt[k] ? sum[k] / cnt[k] : null);
+  }
+  function momentum(states, times) {            // who had the ball in each block of time, from -1 (team B) to 1 (team A)
+    const step = 1 / HZ, n = times.length;
+    if (!n) return {block: 5, bars: []};
+    const stop = times[n - 1] + step, span = stop - times[0];
+    const block = [5, 10, 15, 30, 60, 120, 300, 600].find(b => span / b <= 48) || 600, bars = [];
+    for (let j = 0; times[0] + j * block < stop - 1e-9; j++) {
+      const b0 = times[0] + j * block, b1 = Math.min(b0 + block, stop); let a = 0, b = 0, m = 0;
+      for (let i = 0; i < n; i++) if (times[i] >= b0 - 1e-9 && times[i] < b1 - 1e-9) { m++; if (states[i] === TEAM_A) a++; else if (states[i] === TEAM_B) b++; }
+      bars.push({start: b0, end: b1, team_a: m ? a / m : 0, team_b: m ? b / m : 0, value: m ? (a - b) / m : 0});
+    }
+    return {block, bars};
+  }
+  function extraMetrics(samples, states, pos, source, summary) {
+    const cum = cumulativeLosses(states), last = cum.length ? cum[cum.length - 1] : [0, 0];
+    return {
+      ball_losses: last, possession_changes: last[0] + last[1],
+      pressure_on_ball: pressure(samples, states, pos), pressure_radius_player_heights: PRESS_RADIUS,
+      average_spell_seconds: summary.teams.map(tm => tm.spells ? tm.seconds_on_ball / tm.spells : 0),
+      ball_missing_seconds: source.filter(v => v === 0).length / HZ,
+      momentum: momentum(states, samples.map(s => s.t)),
+    };
+  }
+
+  // ------------------------------------------------------------------ report
+  // Everything below draws the page; the analysis above does not depend on it.
+
+  // ------------------------------------------------------------------ words
+  const COLOUR_ORDER = ['white', 'black', 'grey', 'silver', 'red', 'maroon', 'claret', 'orange', 'yellow', 'gold',
+                        'green', 'lime', 'cyan', 'sky', 'blue', 'navy', 'purple', 'violet', 'pink', 'brown'];
+  const WORDS = {
+    ar: {
+      docTitle: 'من يملك الكرة؟ | تحليل الاستحواذ من الفيديو', otherLang: 'English',
+      title: 'من يملك الكرة؟', tagline: 'استحواذ مباراة كرة القدم من الفيديو، محسوبًا داخل متصفحك.',
+      dropTitle: 'اسحب فيديو المباراة إلى هنا', dropSub: 'أو اضغط لاختياره من جهازك. يُفضَّل ملف MP4.',
+      teamAField: 'الفريق الأول (اختياري)', teamBField: 'الفريق الثاني (اختياري)',
+      namePhA: 'الاسم، مثل الزمالك', namePhB: 'الاسم، مثل الأهلي', colourAuto: 'اللون: تلقائي',
+      from: 'من (دقيقة:ثانية)', to: 'إلى', toPh: 'النهاية',
+      analyse: 'حلّل الفيديو', stop: 'أوقف واعرض ما تم',
+      privacy: 'يجري التحليل كله على جهازك، ولا يُرفع الفيديو إلى أي خادم.',
+      reading: 'جارٍ قراءة {0}…', fileInfo: '{0} · المدة {1} · {2} · سنفحص نحو {3} لقطة',
+      dlModel: 'تنزيل نموذج الكشف: {0} من {1} ميغابايت (أول مرة فقط)', startModel: 'تشغيل نموذج الكشف…',
+      frameStatus: 'اللقطة {0} من {1} · عند {2} من الفيديو · يتبقى نحو {3}', nSec: '{0} ث', nMin: '{0} د',
+      teamsStep: 'تمييز الفريقين وحساب الاستحواذ…', stopping: 'سيتوقف بعد هذه اللقطة…',
+      backendGPU: 'يعمل على كرت الشاشة (WebGPU)', backendCPU: 'يعمل على المعالج فقط، وهو أبطأ',
+      doneStatus: 'اكتمل التحليل.', stoppedEarly: 'توقف التحليل مبكرًا، والنتائج للجزء الذي اكتمل.',
+      errRead: 'تعذّر على المتصفح قراءة هذا الفيديو. جرّب ملف MP4 (H.264).',
+      errLength: 'تعذّرت معرفة مدة {0}. جرّب ملف MP4 (H.264).',
+      errTimes: 'راجع وقتي البداية والنهاية: اكتبهما مثل 1:30، ويجب أن تأتي النهاية بعد البداية.',
+      errModel: 'تعذّر تنزيل نموذج الكشف ({0}). تحقّق من الاتصال وأعد المحاولة.',
+      errFew: 'لم يظهر لاعبون بما يكفي للتمييز بين الفريقين. هل الفيديو لمباراة والملعب ظاهر فيه؟',
+      errSame: 'الفانلات متشابهة جدًا، فتعذّر تقسيم اللاعبين إلى فريقين.',
+      errShort: 'الجزء المختار قصير جدًا للتحليل.', errStoppedEarly: 'توقف التحليل قبل أن يكتمل جزء كافٍ.',
+      errSeek: 'تعذّر الانتقال إلى {0} في هذا الفيديو. جرّب ملف MP4 (H.264).',
+      warnClose: 'لونا الفانلتين متقاربان، فراجع الحلقات على الفيديو قبل الاعتماد على الأرقام.',
+      warnSmall: 'ظهر أحد الفريقين أقل كثيرًا من الآخر، فراجع الحلقات على الفيديو.',
+      possession: 'الاستحواذ', scoreSub: '{0} من الفيديو، فُحصت {1} مرات في الثانية', onBall: '{0} مع الكرة',
+      swap: 'تبديل الاسمين',
+      playerNote: 'تحت كل لاعب حلقة بلون فريقه، وفوق الكرة مثلث بلون الفريق الذي يملكها. اضغط على الشريط للانتقال إلى أي لحظة.',
+      play: 'تشغيل', pause: 'إيقاف مؤقت', speed: 'السرعة', full: 'ملء الشاشة', scrubLabel: 'شريط الاستحواذ والتنقل في الفيديو',
+      liveNow: 'الكرة الآن مع', nobody: 'لا أحد', since: 'منذ {0}',
+      soFar: 'الاستحواذ حتى هذه اللحظة', lossesSoFar: 'فقدان الكرة حتى هذه اللحظة',
+      nearNow: 'لاعبون قرب الكرة الآن', nearHint: 'على بُعد قامة ونصف من الكرة', ballHidden: 'الكرة لا تظهر في هذه اللقطة',
+      momentum: 'زخم المباراة',
+      momentumNote: 'من سيطر على الكرة في كل {0}. العمود فوق الخط يعني أن الكرة كانت أكثر مع {1}، وتحته مع {2}. اضغط على عمود للانتقال إليه.',
+      above: 'فوق الخط', below: 'تحت الخط',
+      mLosses: 'مرات فقدان الكرة', mLossesHint: 'كل مرة انتقلت فيها الكرة إلى الفريق الآخر.',
+      mPress: 'الضغط على حامل الكرة', mPressHint: 'متوسط عدد لاعبي الفريق على بُعد قامة ونصف من الكرة وهي مع الخصم.',
+      mAvg: 'متوسط فترة الاستحواذ', mLong: 'أطول فترة استحواذ',
+      mNone: 'وقت بلا استحواذ', mNoneHint: 'اللعب متوقف، أو لا أحد قريب من الكرة.',
+      mMissing: 'الكرة خارج الكادر', mMissingHint: 'لم تظهر الكرة في الصورة في {0} من الوقت.',
+      spellsTitle: 'فترات الاستحواذ', spellsShow: 'عرض كل الفترات في جدول',
+      thFrom: 'من', thTo: 'إلى', thHolder: 'الكرة مع', thSecs: 'ثوانٍ',
+      saveTitle: 'احفظ النتيجة وشاركها', dlPng: 'صورة للنشر', dlCsv: 'البيانات لحظة بلحظة (CSV)', dlJson: 'الملخص (JSON)', again: 'حلّل فيديو آخر',
+      methodTitle: 'كيف حسبنا هذه الأرقام',
+      method1: 'خمس مرات في كل ثانية يحدد نموذج كشف أماكن اللاعبين والكرة. تُقسَّم الفانلات إلى فريقين حسب لونها، وتُنسب كل لحظة إلى الفريق الأقرب لاعبه إلى الكرة، مقيسًا بأطوال اللاعبين، ثم يُنعَّم التسلسل بنموذج ماركوف مخفي كي لا تقلب لقطة واحدة الاستحواذ.',
+      limits: 'حدود: هذه الأرقام تقدير أولي لم يُقارَن بعد بسجل أحداث رسمي. المسافات تُقاس في الصورة لا على أرض الملعب، ولا يُنسب الاستحواذ للحارس أو الحكم، وقد تُحسب لحظات توقف اللعب أو جامعو الكرات خطأً لأحد الفريقين.',
+      qFrames: 'لقطات جرى تحليلها: {0}', qBall: 'ظهرت الكرة في {0} من اللقطات، وقُدِّر موضعها في {1} أخرى',
+      qView: 'لقطات لا يظهر فيها الملعب (لقطات قريبة أو جمهور): {0}', qModel: 'نموذج الكشف: {0}',
+      footer: 'الطريقة والكود: <a href="https://github.com/amr7772/possession-from-tracking" target="_blank" rel="noopener">github.com/amr7772/possession-from-tracking</a> · المشروع نفسه على بيانات التتبع: <a href="https://huggingface.co/spaces/amreleraqi09/possession-from-tracking" target="_blank" rel="noopener">إعادة العرض</a> · نموذج الكشف YOLO26s من Ultralytics برخصة AGPL-3.0، ويعمل بـ ONNX Runtime Web.',
+      firstTeam: 'الفريق الأول', secondTeam: 'الفريق الثاني', teamOf: 'الفريق {0}',
+      shareFoot: 'تحليل آلي تقديري من الفيديو', shareSub: '{0} من الفيديو',
+      colours: ['أبيض', 'أسود', 'رمادي', 'فضي', 'أحمر', 'نبيتي', 'عنابي', 'برتقالي', 'أصفر', 'ذهبي', 'أخضر', 'فسفوري', 'سماوي', 'لبني', 'أزرق', 'كحلي', 'بنفسجي', 'موف', 'وردي', 'بني'],
+      adj: {white: 'الأبيض', black: 'الأسود', grey: 'الرمادي', silver: 'الفضي', red: 'الأحمر', maroon: 'النبيتي', claret: 'العنابي',
+            orange: 'البرتقالي', yellow: 'الأصفر', gold: 'الذهبي', green: 'الأخضر', lime: 'الفسفوري', cyan: 'السماوي', sky: 'اللبني',
+            blue: 'الأزرق', navy: 'الكحلي', purple: 'البنفسجي', violet: 'الموف', pink: 'الوردي', brown: 'البني'},
+      blocks: {5: '5 ثوانٍ', 10: '10 ثوانٍ', 15: '15 ثانية', 30: '30 ثانية', 60: 'دقيقة', 120: 'دقيقتين', 300: '5 دقائق', 600: '10 دقائق'},
+    },
+    en: {
+      docTitle: 'Who has the ball? Possession from a match video', otherLang: 'العربية',
+      title: 'Who has the ball?', tagline: 'Football possession from a match video, worked out in your browser.',
+      dropTitle: 'Drop a match video here', dropSub: 'or click to choose one from your computer. MP4 works best.',
+      teamAField: 'First team (optional)', teamBField: 'Second team (optional)',
+      namePhA: 'Name, for example Zamalek', namePhB: 'Name, for example Al Ahly', colourAuto: 'Colour: auto',
+      from: 'From (m:ss)', to: 'To', toPh: 'end',
+      analyse: 'Analyse the video', stop: 'Stop and show what is done',
+      privacy: 'Everything runs on your computer. The video is never uploaded.',
+      reading: 'Reading {0}…', fileInfo: '{0} · {1} long · {2} · about {3} frames to look at',
+      dlModel: 'Downloading the detector: {0} of {1} MB (only the first time)', startModel: 'Starting the detector…',
+      frameStatus: 'Frame {0} of {1} · {2} into the video · about {3} left', nSec: '{0} s', nMin: '{0} min',
+      teamsStep: 'Telling the teams apart and working out possession…', stopping: 'Stopping after this frame…',
+      backendGPU: 'Running on the graphics card (WebGPU)', backendCPU: 'Running on the processor only, which is slower',
+      doneStatus: 'Done.', stoppedEarly: 'Stopped early; the results cover the part that was analysed.',
+      errRead: 'This browser cannot read the video. Try an MP4 (H.264) file.',
+      errLength: 'Could not read the length of {0}. Try an MP4 (H.264) file.',
+      errTimes: 'Check the start and end times: write them like 1:30, and the end must come after the start.',
+      errModel: 'Could not download the detector ({0}). Check your connection and try again.',
+      errFew: 'Too few players were found to tell the teams apart. Is this a match video with the pitch in view?',
+      errSame: 'The shirts look too alike to split the players into two teams.',
+      errShort: 'The chosen stretch is too short to analyse.', errStoppedEarly: 'Stopped before enough of the video was analysed.',
+      errSeek: 'The browser could not jump to {0} in this video. Try an MP4 (H.264) file.',
+      warnClose: 'The two kits are close in colour; check the rings on the video before relying on the numbers.',
+      warnSmall: 'One team was seen far less than the other; check the rings on the video.',
+      possession: 'Possession', scoreSub: '{0} of video, looked at {1} times a second', onBall: '{0} on the ball',
+      swap: 'Swap names',
+      playerNote: 'A ring under each player shows the team, and the triangle over the ball takes the colour of the team that has it. Click the bar to jump to any moment.',
+      play: 'Play', pause: 'Pause', speed: 'Speed', full: 'Full screen', scrubLabel: 'Possession bar and video position',
+      liveNow: 'Ball now with', nobody: 'Nobody', since: 'for {0}',
+      soFar: 'Possession up to this moment', lossesSoFar: 'Balls lost up to this moment',
+      nearNow: 'Players near the ball now', nearHint: 'Within one and a half player heights', ballHidden: 'The ball is not in this frame',
+      momentum: 'Momentum',
+      momentumNote: 'Who had the ball in each {0}. A bar above the line means the ball was mostly with {1}; below it, with {2}. Click a bar to jump there.',
+      above: 'above the line', below: 'below the line',
+      mLosses: 'Balls lost', mLossesHint: 'Each time the ball went to the other team.',
+      mPress: 'Pressure on the ball', mPressHint: 'Average number of the team’s players within one and a half player heights of the ball while the other team has it.',
+      mAvg: 'Average spell', mLong: 'Longest spell',
+      mNone: 'Time without possession', mNoneHint: 'Play stopped, or nobody near the ball.',
+      mMissing: 'Ball out of view', mMissingHint: 'The ball was not in the picture {0} of the time.',
+      spellsTitle: 'Spells of possession', spellsShow: 'Show every spell in a table',
+      thFrom: 'From', thTo: 'To', thHolder: 'Ball with', thSecs: 'Seconds',
+      saveTitle: 'Save and share', dlPng: 'Image to share', dlCsv: 'Moment-by-moment data (CSV)', dlJson: 'Summary (JSON)', again: 'Analyse another video',
+      methodTitle: 'How this was measured',
+      method1: 'Five times a second, a detector finds the players and the ball. Shirts are split into two teams by colour, each moment goes to the team whose nearest player is closest to the ball, measured in player heights, and a hidden Markov model smooths the sequence so a single frame cannot flip possession.',
+      limits: 'Limits: these numbers are a first estimate, not yet checked against an official event log. Distances are measured in the picture, not on the pitch; goalkeepers and referees are never given the ball; and stoppages or ball kids can be counted for a team by mistake.',
+      qFrames: 'Frames analysed: {0}', qBall: 'Ball found in {0} of frames, and its position filled in for {1} more',
+      qView: 'Frames with no pitch in view (close-ups, crowd): {0}', qModel: 'Detector: {0}',
+      footer: 'Method and code: <a href="https://github.com/amr7772/possession-from-tracking" target="_blank" rel="noopener">github.com/amr7772/possession-from-tracking</a> · The same project on tracking data: <a href="https://huggingface.co/spaces/amreleraqi09/possession-from-tracking" target="_blank" rel="noopener">the replay</a> · The detector is YOLO26s by Ultralytics (AGPL-3.0), run with ONNX Runtime Web.',
+      firstTeam: 'First team', secondTeam: 'Second team', teamOf: '{0} team',
+      shareFoot: 'Automatic estimate from video', shareSub: '{0} of video',
+      colours: ['White', 'Black', 'Grey', 'Silver', 'Red', 'Maroon', 'Claret', 'Orange', 'Yellow', 'Gold', 'Green', 'Lime', 'Cyan', 'Sky blue', 'Blue', 'Navy', 'Purple', 'Violet', 'Pink', 'Brown'],
+      adj: {white: 'White', black: 'Black', grey: 'Grey', silver: 'Silver', red: 'Red', maroon: 'Maroon', claret: 'Claret', orange: 'Orange',
+            yellow: 'Yellow', gold: 'Gold', green: 'Green', lime: 'Lime', cyan: 'Cyan', sky: 'Sky blue', blue: 'Blue', navy: 'Navy',
+            purple: 'Purple', violet: 'Violet', pink: 'Pink', brown: 'Brown'},
+      blocks: {5: '5-second stretch', 10: '10-second stretch', 15: '15-second stretch', 30: '30-second stretch', 60: 'minute', 120: '2-minute stretch', 300: '5-minute stretch', 600: '10-minute stretch'},
+    },
+  };
+  let lang = 'ar';
+  try { const saved = localStorage.getItem('who-has-the-ball-lang'); if (saved === 'ar' || saved === 'en') lang = saved; } catch (e) { /* storage blocked */ }
+  const rtl = () => lang === 'ar';
+  function t(key, ...args) {
+    let s = WORDS[lang][key]; if (s == null) s = WORDS.en[key]; if (s == null) return key;
+    if (typeof s !== 'string') return s;
+    args.forEach((a, i) => { s = s.split('{' + i + '}').join(String(a)); });
+    return s;
+  }
+  const iso = s => '⁦' + s + '⁩';          // keeps times left to right inside Arabic text
+  const pct = v => Math.round(v * 100) + '%';
+  const dur = v => v < 60 ? t('nSec', Math.round(v)) : iso(clockOf(v));
+  const dur1 = v => !v ? '–' : v < 60 ? t('nSec', (Math.round(v * 10) / 10).toString()) : iso(clockOf(v));
+  const count = n => n.toLocaleString('en');
+
+  // ------------------------------------------------------------------ team names and colours
+  const MARK = '⁣';                               // names starting with this are made up by the page
+  function teamLabel(k) {
+    if (!R) return '';
+    const name = R.teams.names[k];
+    if (name && name.charAt(0) === MARK) {
+      const w = name.slice(1);
+      if (w === '#1') return t('firstTeam');
+      if (w === '#2') return t('secondTeam');
+      return t('teamOf', t('adj')[w] || w);
+    }
+    return name;
+  }
+  function displayColour(hex) {                        // a cleaner version of a measured shirt colour
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let h = 0;
+    if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+    let S2, L2;
+    if (s < 0.18) { S2 = 0; L2 = l > 0.62 ? 0.95 : l < 0.3 ? 0.13 : l; }
+    else { S2 = Math.min(1, s * 1.3); L2 = Math.min(0.6, Math.max(0.36, l)); }
+    const c = (1 - Math.abs(2 * L2 - 1)) * S2, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = L2 - c / 2;
+    const rgb = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return '#' + rgb.map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('');
+  }
+  const CVD = [[[0.152286, 1.052583, -0.204868], [0.114503, 0.786281, 0.099216], [-0.003882, -0.048116, 1.051998]],
+               [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.011820, 0.042940, 0.968881]]];
+  function simulate(hex, M) {
+    const lin = [1, 3, 5].map(i => LIN[parseInt(hex.slice(i, i + 2), 16)]);
+    return '#' + M.map(row => { const v = Math.min(1, Math.max(0, row[0] * lin[0] + row[1] * lin[1] + row[2] * lin[2]));
+      return Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)).toString(16).padStart(2, '0'); }).join('');
+  }
+  function kitsTellApart(a, b) {                      // also for the two common kinds of colour blindness
+    if (dist(stdLab(a), stdLab(b)) < 22) return false;
+    return CVD.every(M => dist(stdLab(simulate(a, M)), stdLab(simulate(b, M))) >= 14);
+  }
+  let TC = {fill: ['#2a78d6', '#eb6834'], edge: ['rgba(128,128,128,0.45)', 'rgba(128,128,128,0.45)'], kit: false};
+  const cssVar = (name, fallback) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+  function teamColours() {
+    const kit = R.kitDisplay;
+    const fill = kitsTellApart(kit[0], kit[1]) ? kit.slice() : [cssVar('--series-1', '#2a78d6'), cssVar('--series-2', '#eb6834')];
+    // A kit close to the page colour (a white shirt on a light page, a black one on a dark page) gets a firm outline.
+    const surface = stdLab(cssVar('--surface', '#ffffff')), firm = cssVar('--text-3', '#7b8478');
+    const edge = fill.map(c => dist(stdLab(c), surface) < 25 ? firm : 'rgba(128,128,128,0.45)');
+    return {fill, edge, kit: fill[0] === kit[0]};
+  }
+
+  // ------------------------------------------------------------------ page elements
+  const $ = id => document.getElementById(id);
+  const fileInput = $('file'), goBtn = $('go'), stopBtn = $('stop');
+  const statusEl = $('status'), errorEl = $('error'), progress = $('progress');
+  const player = $('player'), overlay = $('overlay');
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, text) => { const e = document.createElement(tag); for (const k in attrs || {}) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+  const sv = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs || {}) e.setAttribute(k, attrs[k]); return e; };
+  const paint = (d, k) => { d.style.background = TC.fill[k]; d.style.boxShadow = 'inset 0 0 0 1px ' + TC.edge[k]; return d; };
+  const kitDot = (k, small) => paint(el('span', {class: small ? 'kit sm' : 'kit', 'aria-hidden': 'true'}), k);
+
+  // Messages are kept as a key so they can be shown again in the other language.
+  function fail(key, ...args) { const e = new Error(t(key, ...args)); e.key = key; e.args = args; return e; }
+  let errState = null, statusKey = null, backendKey = null;
+  function showError(e) {
+    errState = !e ? null : e.key ? {key: e.key, args: e.args} : {msg: e.message || String(e)};
+    errorEl.hidden = !errState;
+    errorEl.textContent = !errState ? '' : errState.key ? t(errState.key, ...errState.args) : errState.msg;
+  }
+  function setStatus(key, ...args) { statusKey = key ? [key, args] : null; statusEl.textContent = key ? t(key, ...args) : ''; }
+  function setProgress(frac, text) {
+    $('progress-wrap').hidden = false;
+    progress.firstElementChild.style.width = (100 * Math.max(0, Math.min(1, frac))).toFixed(1) + '%';
+    progress.setAttribute('aria-valuenow', String(Math.round(100 * frac)));
+    if (text != null) { statusKey = null; statusEl.textContent = text; }
+  }
+
+  // ------------------------------------------------------------------ dashboard
+  function renderDash() {
+    if (!R) return;
+    const S = R.summary, T = S.teams;
+    TC = teamColours();
+    T.forEach((tm, k) => { tm.name = teamLabel(k); });
+    $('dash').hidden = false;
+    const score = $('score'); score.replaceChildren();
+    for (const k of [0, 1]) {
+      const side = el('div', {class: 'side ' + (k ? 'b' : 'a')});
+      const who = el('div', {class: 'who'});
+      who.append(el('div', {class: 'tname'}, teamLabel(k)), el('div', {class: 'sub2'}, t('onBall', dur(T[k].seconds_on_ball))));
+      const p = el('div', {class: 'pct'}, pct(T[k].possession));
+      if (k === 0) side.append(kitDot(0), who, p); else side.append(p, who, kitDot(1));
+      if (k === 1) { const mid = el('div', {class: 'mid'}); mid.append(el('div', {}, t('possession')), el('div', {class: 'ltr'}, clockOf(S.duration_seconds))); score.append(mid); }
+      score.append(side);
+    }
+    const split = $('split'); split.replaceChildren();
+    for (const k of [0, 1]) { if (T[k].possession <= 0) continue; const d = paint(el('div'), k); d.style.flex = String(T[k].possession); split.append(d); }
+    split.setAttribute('aria-label', t('possession') + ': ' + teamLabel(0) + ' ' + pct(T[0].possession) + ', ' + teamLabel(1) + ' ' + pct(T[1].possession));
+    $('score-sub').textContent = t('scoreSub', dur(S.duration_seconds), S.rate_hz);
+    $('swap').hidden = !R.customNames;
+    const w = $('warn'), key = !S.warning ? null : /close in colour/.test(S.warning) ? 'warnClose' : 'warnSmall';
+    w.hidden = !key; w.textContent = key ? t(key) : '';
+    renderScrub(); renderMomentum(); renderMetrics(); renderSpells(); renderQuality();
+    lastI = -1; syncTo(player.currentTime || R.t0);
+    playIcon();
+  }
+
+  function currentIndex(time) { return Math.min(R.samples.length - 1, Math.max(0, Math.round((time - R.t0) * HZ))); }
+
+  let lastI = -1;
+  function renderLive(i) {
+    const live = $('live'); live.replaceChildren();
+    const st = R.states[i], held = R.cum[i], tot = held[0] + held[1], lost = R.losses[i];
+    let j = i; while (j > 0 && R.states[j - 1] === st) j--;
+    const a = el('div'); a.append(el('div', {class: 'label'}, t('liveNow')));
+    const now = el('div', {class: 'now'});
+    if (st === TEAM_A || st === TEAM_B) now.append(kitDot(st), el('span', {}, teamLabel(st)));
+    else now.append(el('span', {class: 'muted'}, t('nobody')));
+    a.append(now, el('div', {class: 'sub2'}, t('since', dur((i - j + 1) / HZ))));
+    const b = el('div'); b.append(el('div', {class: 'label'}, t('soFar')));
+    const ms = el('div', {class: 'mini-split'});
+    for (const k of [0, 1]) { const d = paint(el('div'), k); d.style.flex = String(tot ? Math.max(held[k] / tot, 0.001) : 0.5); ms.append(d); }
+    b.append(ms, pairRow(k => teamLabel(k) + ' ' + (tot ? pct(held[k] / tot) : '–')));
+    const c = el('div'); c.append(el('div', {class: 'label'}, t('lossesSoFar')), pairRow(k => teamLabel(k) + ': ' + lost[k]));
+    const d = el('div'), near = nearBall(i); d.append(el('div', {class: 'label'}, t('nearNow')));
+    if (near) d.append(pairRow(k => teamLabel(k) + ': ' + near[k]), el('div', {class: 'sub2'}, t('nearHint')));
+    else d.append(el('div', {class: 'sub2'}, t('ballHidden')));
+    live.append(a, b, c, d);
+  }
+  function pairRow(text) {
+    const row = el('div', {class: 'mini-row'});
+    for (const k of [0, 1]) { const s = el('span'); s.append(kitDot(k, true), document.createTextNode(text(k))); row.append(s); }
+    return row;
+  }
+  function nearBall(i) {                               // players of each team close to the ball in this frame
+    const b = R.ball[i]; if (!b) return null;
+    const c = [0, 0];
+    for (const p of R.samples[i].people) if (p.team === TEAM_A || p.team === TEAM_B) {
+      if (rectDistance(b[0], b[1], p.box) / Math.max(1, p.box[3] - p.box[1]) < PRESS_RADIUS) c[p.team]++;
+    }
+    return c;
+  }
+
+  function syncTo(time) {
+    if (!R) return;
+    const i = currentIndex(time);
+    if (i !== lastI) { lastI = i; renderLive(i); }
+    movePlayheads(time);
+    $('clock').textContent = clockOf(time) + ' / ' + clockOf(R.t1);
+  }
+
+  // time to x, mirrored for right-to-left reading
+  function xFor(v, g) { const f = Math.min(1, Math.max(0, (v - g.a) / ((g.b - g.a) || 1))); return rtl() ? g.x1 - f * (g.x1 - g.x0) : g.x0 + f * (g.x1 - g.x0); }
+  function vFor(x, g) { const f = rtl() ? (g.x1 - x) / (g.x1 - g.x0) : (x - g.x0) / (g.x1 - g.x0); return g.a + Math.min(1, Math.max(0, f)) * (g.b - g.a); }
+  function barPath(x, w, base, end, r) {
+    r = Math.min(r, w / 2, Math.abs(end - base)); const s = end < base ? 1 : -1;
+    return 'M' + x + ',' + base + 'V' + (end + s * r) + 'Q' + x + ',' + end + ' ' + (x + r) + ',' + end + 'H' + (x + w - r) +
+      'Q' + (x + w) + ',' + end + ' ' + (x + w) + ',' + (end + s * r) + 'V' + base + 'Z';
+  }
+  function niceTicks(a, b, maxN) {
+    const steps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
+    const st = steps.find(s => (b - a) / s <= maxN) || 3600, out = [];
+    for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + 1e-9; v += st) out.push(v);
+    return out;
+  }
+
+  let scrubG = null, momG = null;
+  function renderScrub() {
+    const box = $('scrub'); box.replaceChildren();
+    const W = Math.max(60, box.clientWidth), H = 36;
+    const g = {a: R.t0, b: R.t1, x0: 8, x1: W - 8};
+    const s = sv('svg', {viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, 'aria-hidden': 'true'});
+    s.append(sv('rect', {x: g.x0, y: 12, width: g.x1 - g.x0, height: 12, rx: 6, fill: 'var(--none)'}));
+    for (const sp of R.summary.spells) {
+      if (sp.state === 'none') continue;
+      const k = sp.state === 'team_a' ? 0 : 1, xa = xFor(sp.start, g), xb = xFor(sp.end, g);
+      s.append(sv('rect', {x: Math.min(xa, xb), y: 12, width: Math.max(1, Math.abs(xb - xa)), height: 12, fill: TC.fill[k], stroke: TC.edge[k], 'stroke-width': 1}));
+    }
+    const head = sv('g', {});
+    head.append(sv('line', {x1: 0, x2: 0, y1: 3, y2: 33, stroke: 'var(--text)', 'stroke-width': 2}),
+                sv('circle', {cx: 0, cy: 18, r: 6.5, fill: 'var(--surface)', stroke: 'var(--text)', 'stroke-width': 2}));
+    s.append(head); box.append(s);
+    g.head = head; scrubG = g;
+    box.setAttribute('aria-label', t('scrubLabel'));
+    box.setAttribute('aria-valuemin', R.t0.toFixed(1)); box.setAttribute('aria-valuemax', R.t1.toFixed(1));
+  }
+
+  function renderMomentum() {
+    const M = R.summary.metrics.momentum, box = $('momentum'); box.replaceChildren();
+    $('momentum-note').textContent = t('momentumNote', t('blocks')[M.block] || dur(M.block), teamLabel(0), teamLabel(1));
+    const lg = $('momentum-legend'); lg.replaceChildren();
+    for (const k of [0, 1]) { const s = el('span'); s.append(kitDot(k, true), document.createTextNode(teamLabel(k) + ': ' + t(k ? 'below' : 'above'))); lg.append(s); }
+    const W = Math.max(280, box.clientWidth), H = 184, top = 8, mid = 86, half = 70;
+    const g = {a: R.t0, b: R.t1, x0: 4, x1: W - 4};
+    const s = sv('svg', {viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img',
+      'aria-label': t('momentum') + ': ' + M.bars.length + ' × ' + (t('blocks')[M.block] || M.block)});
+    for (const v of niceTicks(g.a, g.b, Math.max(3, Math.floor(W / 110)))) {
+      const x = xFor(v, g);
+      s.append(sv('line', {x1: x, x2: x, y1: top, y2: mid + half, stroke: 'var(--line)', 'stroke-width': 1}));
+      const tx = sv('text', {x: Math.min(W - 18, Math.max(18, x)), y: H - 4, 'text-anchor': 'middle'}); tx.textContent = clockOf(v); s.append(tx);
+    }
+    s.append(sv('line', {x1: g.x0, x2: g.x1, y1: mid, y2: mid, stroke: 'var(--line-2)', 'stroke-width': 1}));
+    const n = M.bars.length, slot = (g.x1 - g.x0) / Math.max(1, n), bw = Math.max(2, Math.min(30, slot * 0.72));
+    const tip = el('div', {class: 'tip'}); box.append(tip);
+    M.bars.forEach(bar => {
+      const cx = xFor((bar.start + bar.end) / 2, g), h = Math.abs(bar.value) * half;
+      if (h >= 0.5) {
+        const k = bar.value > 0 ? 0 : 1, end = k === 0 ? mid - h : mid + h;
+        s.append(sv('path', {d: barPath(cx - bw / 2, bw, k === 0 ? mid - 1 : mid + 1, end, 4), fill: TC.fill[k], stroke: TC.edge[k], 'stroke-width': 1}));
+      }
+      const hit = sv('rect', {x: cx - slot / 2, y: top, width: slot, height: mid + half - top, fill: 'transparent', style: 'cursor:pointer'});
+      hit.addEventListener('pointerenter', () => {
+        tip.replaceChildren(el('div', {class: 'sub2'}, iso(clockOf(bar.start) + '–' + clockOf(bar.end))));
+        for (const k of [0, 1]) { const r = el('div', {class: 't-row'}); r.append(kitDot(k, true), document.createTextNode(teamLabel(k) + ' ' + pct(k ? bar.team_b : bar.team_a))); tip.append(r); }
+        tip.style.display = 'block';
+        const left = Math.min(Math.max(0, cx - tip.offsetWidth / 2), W - tip.offsetWidth);
+        tip.style.left = left + 'px'; tip.style.top = (bar.value > 0 ? mid + 8 : top) + 'px';
+      });
+      hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+      hit.addEventListener('click', () => seekTo(bar.start));
+      s.append(hit);
+    });
+    const ph = sv('line', {x1: 0, x2: 0, y1: top, y2: mid + half, stroke: 'var(--text)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3', 'pointer-events': 'none'});
+    s.append(ph); box.prepend(s);
+    g.ph = ph; momG = g;
+  }
+
+  function movePlayheads(time) {
+    if (scrubG) { scrubG.head.setAttribute('transform', 'translate(' + xFor(time, scrubG) + ',0)'); $('scrub').setAttribute('aria-valuenow', time.toFixed(1)); $('scrub').setAttribute('aria-valuetext', clockOf(time)); }
+    if (momG) { const x = xFor(time, momG); momG.ph.setAttribute('x1', x); momG.ph.setAttribute('x2', x); }
+  }
+
+  function renderMetrics() {
+    const S = R.summary, M = S.metrics, box = $('metrics'); box.replaceChildren();
+    const card = (title, values, hint) => {
+      const c = el('div', {class: 'metric'}); c.append(el('div', {class: 'm-title'}, title));
+      if (Array.isArray(values)) for (const k of [0, 1]) {
+        const r = el('div', {class: 'm-row'}), nm = el('span', {class: 'm-name'});
+        nm.append(kitDot(k, true), document.createTextNode(teamLabel(k))); r.append(nm, el('b', {}, values[k])); c.append(r);
+      } else c.append(el('div', {class: 'm-one'}, values));
+      if (hint) c.append(el('div', {class: 'm-hint'}, hint));
+      box.append(c);
+    };
+    card(t('mLosses'), M.ball_losses.map(String), t('mLossesHint'));
+    card(t('mPress'), M.pressure_on_ball.map(v => v == null ? '–' : v.toFixed(1)), t('mPressHint'));
+    card(t('mAvg'), M.average_spell_seconds.map(dur1));
+    card(t('mLong'), S.teams.map(tm => dur1(tm.longest_spell_seconds)));
+    card(t('mNone'), dur(S.seconds_no_possession), t('mNoneHint'));
+    card(t('mMissing'), dur(M.ball_missing_seconds), t('mMissingHint', pct(M.ball_missing_seconds / Math.max(1e-9, S.duration_seconds))));
+  }
+
+  function renderSpells() {
+    const tb = $('spells-table'); tb.replaceChildren();
+    const head = el('tr'); head.append(el('th', {}, t('thFrom')), el('th', {}, t('thTo')), el('th', {}, t('thHolder')), el('th', {class: 'num'}, t('thSecs'))); tb.append(head);
+    for (const sp of R.summary.spells) {
+      const k = sp.state === 'team_a' ? 0 : sp.state === 'team_b' ? 1 : -1, tr = el('tr');
+      const who = el('td'); if (k >= 0) who.append(kitDot(k, true), document.createTextNode(' ' + teamLabel(k))); else who.textContent = t('nobody');
+      tr.append(el('td', {class: 'ltr'}, clockOf(sp.start)), el('td', {class: 'ltr'}, clockOf(sp.end)), who, el('td', {class: 'num'}, sp.seconds.toFixed(1)));
+      tr.style.cursor = 'pointer'; tr.addEventListener('click', () => seekTo(sp.start));
+      tb.append(tr);
+    }
+  }
+
+  function renderQuality() {
+    const S = R.summary, q = $('quality'); q.replaceChildren();
+    [t('qFrames', count(S.frames_analysed)), t('qBall', pct(S.ball_seen_share), pct(S.ball_filled_share)),
+     t('qView', pct(S.no_pitch_view_share)), t('qModel', S.detector)].forEach(s => q.append(el('li', {}, s)));
+  }
 
   // ------------------------------------------------------------------ marked video
   function drawOverlay() {
@@ -862,14 +1191,14 @@ a { color: inherit; }
     const ctx = overlay.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cw, ch);
     if (!R || !player.videoWidth) return;
     const vw = player.videoWidth, vh = player.videoHeight, s = Math.min(cw / vw, ch / vh), ox = (cw - vw * s) / 2, oy = (ch - vh * s) / 2;
-    const t = player.currentTime, i = Math.round((t - R.samples[0].t) * HZ);
+    const time = player.currentTime, i = Math.round((time - R.t0) * HZ);
     if (i < 0 || i >= R.samples.length) return;
-    const smp = R.samples[i], st = R.states[i], kit = R.teams.colours;
+    const smp = R.samples[i], st = R.states[i], kit = R.kitDisplay;
     for (const p of smp.people) {
       const x1 = ox + p.box[0] * s, x2 = ox + p.box[2] * s, y2 = oy + p.box[3] * s, rx = Math.max(6, (x2 - x1) * 0.6), ry = Math.max(3, (x2 - x1) * 0.22);
       ctx.beginPath(); ctx.ellipse((x1 + x2) / 2, y2, rx, ry, 0, -Math.PI / 4, Math.PI * 1.31);
-      if (p.team === TEAM_A || p.team === TEAM_B) { ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = kit[p.team]; ctx.stroke(); }
-      else { ctx.lineWidth = 1; ctx.strokeStyle = '#282828'; ctx.stroke(); }
+      if (p.team === TEAM_A || p.team === TEAM_B) { ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = kit[p.team]; ctx.stroke(); }
+      else { ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(30,30,30,0.9)'; ctx.stroke(); }
     }
     const b = R.ball[i];
     if (b) {
@@ -878,41 +1207,171 @@ a { color: inherit; }
       if (st === TEAM_A || st === TEAM_B) { ctx.fillStyle = kit[st]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.stroke(); }
       else { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     }
-    const held = R.cum[i], tot = held[0] + held[1], split = tot ? [100 * held[0] / tot, 100 * held[1] / tot] : [50, 50];
-    ctx.fillStyle = 'rgba(20,20,20,0.85)'; ctx.fillRect(0, 0, cw, 30);
-    ctx.font = '600 13px system-ui, sans-serif'; ctx.textBaseline = 'middle'; let x = 10;
-    for (const k of [TEAM_A, TEAM_B]) {
-      ctx.fillStyle = kit[k]; ctx.fillRect(x, 8, 14, 14); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, 8.5, 13, 13);
-      const label = R.teams.names[k] + ' ' + split[k].toFixed(0) + '%'; ctx.fillStyle = '#f0f0f0'; ctx.fillText(label, x + 20, 15);
-      x += 34 + ctx.measureText(label).width;
+    const held = R.cum[i], tot = held[0] + held[1], bh = Math.max(28, Math.round(ch * 0.075)), pad = 12, isR = rtl();
+    ctx.fillStyle = 'rgba(8,12,10,0.78)'; ctx.fillRect(0, 0, cw, bh);
+    const fs = Math.max(12, Math.min(16, Math.round(bh * 0.48)));
+    ctx.font = '600 ' + fs + 'px "IBM Plex Sans Arabic", system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.direction = isR ? 'rtl' : 'ltr';
+    const sx = isR ? cw - pad - 14 : pad;
+    let startX = isR ? cw - pad : pad;
+    if (st === TEAM_A || st === TEAM_B) {
+      ctx.fillStyle = kit[st]; ctx.fillRect(sx, bh / 2 - 7, 14, 14);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(sx + 0.5, bh / 2 - 6.5, 13, 13);
+      startX += isR ? -22 : 22;
     }
-    const now = st === TEAM_A || st === TEAM_B ? R.teams.names[st] : 'no possession';
-    const right = 'Ball: ' + now + '   ' + clockOf(t); ctx.textAlign = 'right'; ctx.fillText(right, cw - 10, 15); ctx.textAlign = 'left';
+    ctx.fillStyle = '#f1f4ef'; ctx.textAlign = 'start';
+    const holder = t('liveNow') + ': ' + (st === TEAM_A || st === TEAM_B ? teamLabel(st) : t('nobody'));
+    ctx.fillText(holder, startX, bh / 2);
+    const room = cw - 2 * pad - Math.abs(startX - (isR ? cw - pad : pad)) - ctx.measureText(holder).width - 16;
+    const splitText = tot ? teamLabel(0) + ' ' + pct(held[0] / tot) + ' · ' + teamLabel(1) + ' ' + pct(held[1] / tot) : '';
+    let right = splitText ? splitText + '   ' + clockOf(time) : clockOf(time);
+    if (ctx.measureText(right).width > room) right = clockOf(time);
+    if (ctx.measureText(right).width > room) right = '';
+    ctx.textAlign = 'end';
+    if (right) ctx.fillText(right, isR ? pad : cw - pad, bh / 2);
   }
-  function frameLoop() { drawOverlay(); if (player.requestVideoFrameCallback) player.requestVideoFrameCallback(frameLoop); }
-  ['seeked', 'pause', 'loadeddata', 'play'].forEach(ev => player.addEventListener(ev, drawOverlay));
+
+  const ICONS = {play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+                 pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>'};
+  function playIcon() { const b = $('play'); b.innerHTML = player.paused ? ICONS.play : ICONS.pause; b.setAttribute('aria-label', player.paused ? t('play') : t('pause')); }
+  function seekTo(v) { if (!R) return; player.currentTime = Math.min(R.t1 - 0.02, Math.max(R.t0, v)); syncTo(player.currentTime); drawOverlay(); }
+  function togglePlay() { if (!R) return; if (player.paused) { if (player.currentTime >= R.t1 - 0.05) player.currentTime = R.t0; player.play().catch(() => {}); } else player.pause(); }
+  $('play').addEventListener('click', togglePlay);
+  $('player-box').addEventListener('click', togglePlay);
+  ['play', 'pause'].forEach(ev => player.addEventListener(ev, playIcon));
+  player.addEventListener('timeupdate', () => { if (R && player.currentTime >= R.t1 && !player.paused) player.pause(); });
+  ['seeked', 'loadeddata', 'timeupdate', 'pause'].forEach(ev => player.addEventListener(ev, () => { drawOverlay(); if (R) syncTo(player.currentTime); }));
+  function frameLoop() { drawOverlay(); if (R) syncTo(player.currentTime); player.requestVideoFrameCallback(frameLoop); }
   if (player.requestVideoFrameCallback) player.requestVideoFrameCallback(frameLoop);
-  else player.addEventListener('timeupdate', drawOverlay);
+  else player.addEventListener('play', function tick() { drawOverlay(); if (R) syncTo(player.currentTime); if (!player.paused) requestAnimationFrame(tick); });
+  const SPEEDS = [1, 2, 0.5];
+  $('speed').addEventListener('click', () => { const i = (SPEEDS.indexOf(player.playbackRate) + 1) % SPEEDS.length; player.playbackRate = SPEEDS[i]; $('speed').textContent = SPEEDS[i] + '×'; });
   if (!document.fullscreenEnabled) $('full').hidden = true;
-  $('full').addEventListener('click', () => { const box = $('player-box');
-    const go = document.fullscreenElement ? document.exitFullscreen() : box.requestFullscreen();
-    if (go && go.catch) go.catch(() => { $('full').hidden = true; }); });
-  document.addEventListener('fullscreenchange', () => setTimeout(drawOverlay, 100));
+  $('full').addEventListener('click', () => {
+    const go = document.fullscreenElement ? document.exitFullscreen() : $('player-box').requestFullscreen();
+    if (go && go.catch) go.catch(() => { $('full').hidden = true; });
+  });
+  document.addEventListener('fullscreenchange', () => setTimeout(drawOverlay, 120));
+  const scrub = $('scrub');
+  let dragging = false;
+  scrub.addEventListener('pointerdown', e => { if (!scrubG) return; dragging = true; scrub.setPointerCapture(e.pointerId); seekTo(vFor(e.clientX - scrub.getBoundingClientRect().left, scrubG)); });
+  scrub.addEventListener('pointermove', e => { if (dragging) seekTo(vFor(e.clientX - scrub.getBoundingClientRect().left, scrubG)); });
+  scrub.addEventListener('pointerup', () => { dragging = false; });
+  scrub.addEventListener('keydown', e => {
+    if (!R) return;
+    const step = e.shiftKey ? 10 : 1, dir = rtl() ? -1 : 1;
+    if (e.key === 'ArrowRight') { seekTo(player.currentTime + dir * step); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { seekTo(player.currentTime - dir * step); e.preventDefault(); }
+    else if (e.key === 'Home') { seekTo(R.t0); e.preventDefault(); }
+    else if (e.key === 'End') { seekTo(R.t1); e.preventDefault(); }
+    else if (e.key === ' ' || e.key === 'Enter') { togglePlay(); e.preventDefault(); }
+  });
 
   // ------------------------------------------------------------------ downloads
-  function download(name, text, type) {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
-    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  function downloadBlob(name, blob) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   }
-  $('dl-json').addEventListener('click', () => { if (R) download('summary.json', JSON.stringify(R.summary, null, 2), 'application/json'); });
+  $('dl-json').addEventListener('click', () => { if (R) downloadBlob('summary.json', new Blob([JSON.stringify(R.summary, null, 2)], {type: 'application/json'})); });
   $('dl-csv').addEventListener('click', () => {
     if (!R) return;
-    const rows = [['seconds', 'state', 'p_team_a', 'p_team_b', 'p_none', 'ball_x', 'ball_y', 'ball', 'players_team_a', 'players_team_b', 'pitch_share'].join(',')];
+    const rows = [['seconds', 'state', 'p_team_a', 'p_team_b', 'p_none', 'ball_x', 'ball_y', 'ball', 'players_team_a', 'players_team_b', 'pitch_share', 'balls_lost_team_a', 'balls_lost_team_b'].join(',')];
     R.samples.forEach((s, i) => { const p = R.proba[i], b = R.ball[i];
       rows.push([s.t.toFixed(2), STATE_NAMES[R.states[i]], p[0].toFixed(3), p[1].toFixed(3), p[2].toFixed(3), b ? b[0].toFixed(1) : '', b ? b[1].toFixed(1) : '',
-        ['missing', 'seen', 'filled'][R.source[i]], s.people.filter(q => q.team === TEAM_A).length, s.people.filter(q => q.team === TEAM_B).length, s.share.toFixed(2)].join(',')); });
-    download('possession.csv', rows.join('\n') + '\n', 'text/csv');
+        ['missing', 'seen', 'filled'][R.source[i]], s.people.filter(q => q.team === TEAM_A).length, s.people.filter(q => q.team === TEAM_B).length, s.share.toFixed(2),
+        R.losses[i][0], R.losses[i][1]].join(',')); });
+    downloadBlob('possession.csv', new Blob([rows.join('\n') + '\n'], {type: 'text/csv'}));
   });
+
+  function roundRect(g, x, y, w, h, r, colour) {
+    if (w <= 0 || h <= 0) return;
+    r = Math.min(r, w / 2, h / 2);
+    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+    g.fillStyle = colour; g.fill(); g.lineWidth = 1.5; g.strokeStyle = 'rgba(255,255,255,0.4)'; g.stroke();
+  }
+  function fitFont(g, text, weight, size, maxW) {
+    for (let s = size; s >= 14; s -= 2) { g.font = weight + ' ' + s + 'px "IBM Plex Sans Arabic", system-ui, sans-serif'; if (g.measureText(text).width <= maxW) return; }
+  }
+  async function sharePng() {
+    if (!R) return;
+    const S = R.summary, M = S.metrics, W = 1200, H = 675, P = 64, isR = rtl();
+    try { await Promise.all(['400 22px', '600 30px', '700 120px'].map(f => document.fonts.load(f + ' "IBM Plex Sans Arabic"'))); } catch (e) { /* system font then */ }
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'), fill = TC.fill, F = (w, s) => w + ' ' + s + 'px "IBM Plex Sans Arabic", system-ui, sans-serif';
+    g.fillStyle = '#0c120e'; g.fillRect(0, 0, W, H);
+    g.direction = isR ? 'rtl' : 'ltr'; g.textBaseline = 'alphabetic';
+    const S0 = isR ? W - P : P, E0 = isR ? P : W - P, A = isR ? 'right' : 'left', Z = isR ? 'left' : 'right', toEnd = isR ? -1 : 1;
+    g.textAlign = A; g.fillStyle = '#6fd497'; g.font = F(600, 28); g.fillText(t('title'), S0, 78);
+    g.textAlign = Z; g.fillStyle = '#9aa69e'; g.font = F(400, 22); g.fillText(t('shareSub', clockOf(S.duration_seconds)), E0, 78);
+    const dot = (x, y, k, r) => { g.beginPath(); g.arc(x, y, r, 0, 2 * Math.PI); g.fillStyle = fill[k]; g.fill(); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,0.4)'; g.stroke(); };
+    dot(S0 + toEnd * 13, 158, 0, 13); g.fillStyle = '#ffffff'; g.textAlign = A; fitFont(g, teamLabel(0), 600, 34, W / 2 - 140); g.fillText(teamLabel(0), S0 + toEnd * 38, 170);
+    dot(E0 - toEnd * 13, 158, 1, 13); g.fillStyle = '#ffffff'; g.textAlign = Z; fitFont(g, teamLabel(1), 600, 34, W / 2 - 140); g.fillText(teamLabel(1), E0 - toEnd * 38, 170);
+    g.font = F(700, 128); g.fillStyle = '#ffffff'; g.textAlign = A; g.fillText(pct(S.teams[0].possession), S0, 300);
+    g.textAlign = Z; g.fillText(pct(S.teams[1].possession), E0, 300);
+    g.font = F(400, 22); g.fillStyle = '#9aa69e'; g.textAlign = 'center'; g.fillText(t('possession'), W / 2, 270);
+    const bx = P, bw = W - 2 * P, aW = bw * S.teams[0].possession;
+    roundRect(g, isR ? bx + bw - aW : bx, 326, Math.max(0, aW - 3), 16, 8, fill[0]);
+    roundRect(g, isR ? bx : bx + aW + 3, 326, Math.max(0, bw - aW - 3), 16, 8, fill[1]);
+    const mm = 452, mh = 54, bars = M.momentum.bars, slot = bw / Math.max(1, bars.length), w = Math.max(3, Math.min(26, slot * 0.7));
+    g.font = F(400, 20); g.fillStyle = '#9aa69e'; g.textAlign = A; g.fillText(t('momentum'), S0, 380);
+    g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 1; g.beginPath(); g.moveTo(bx, mm); g.lineTo(bx + bw, mm); g.stroke();
+    bars.forEach((b, j) => {
+      const cx = isR ? bx + bw - (j + 0.5) * slot : bx + (j + 0.5) * slot, h = Math.abs(b.value) * mh;
+      if (h >= 1) roundRect(g, cx - w / 2, b.value > 0 ? mm - h : mm + 1, w, h, 3, b.value > 0 ? fill[0] : fill[1]);
+    });
+    const stats = [[t('mLosses'), M.ball_losses.map(String)], [t('mPress'), M.pressure_on_ball.map(v => v == null ? '–' : v.toFixed(1))],
+                   [t('mLong'), S.teams.map(tm => dur1(tm.longest_spell_seconds).replace(/[⁦⁩]/g, ''))]];
+    stats.forEach(([label, vals], j) => {
+      let x = S0 + toEnd * j * (bw / 3);
+      g.textAlign = A; g.fillStyle = '#9aa69e'; g.font = F(400, 20); g.fillText(label, x, 564);
+      g.font = F(600, 30);
+      for (const k of [0, 1]) {
+        dot(x + toEnd * 8, 594, k, 8); x += toEnd * 24;
+        g.fillStyle = '#ffffff'; g.fillText(vals[k], x, 605); x += toEnd * (g.measureText(vals[k]).width + 30);
+      }
+    });
+    g.font = F(400, 18); g.fillStyle = '#6f7c73'; g.textAlign = A; g.fillText(t('shareFoot'), S0, 652);
+    g.direction = 'ltr'; g.textAlign = isR ? 'left' : 'right'; g.fillText('huggingface.co/spaces/amreleraqi09/possession-from-video', E0, 652);
+    c.toBlob(blob => { if (blob) downloadBlob('who-has-the-ball.png', blob); }, 'image/png');
+  }
+  $('dl-png').addEventListener('click', () => { sharePng(); });
+  $('again').addEventListener('click', () => { $('setup').scrollIntoView({behavior: 'smooth', block: 'start'}); });
+  $('swap').addEventListener('click', () => { if (!R) return; R.teams.names.reverse(); lastI = -1; renderDash(); });
+
+  // ------------------------------------------------------------------ language
+  function fillColourSelects() {
+    for (const id of ['colourA', 'colourB']) {
+      const sel = $(id), keep = sel.value; sel.replaceChildren(el('option', {value: ''}, t('colourAuto')));
+      COLOUR_ORDER.forEach((w, i) => sel.append(el('option', {value: w}, t('colours')[i])));
+      sel.value = keep || ''; sel.setAttribute('aria-label', t('colourAuto'));
+    }
+  }
+  function showFileInfo() {
+    if (!videoMeta) return;
+    $('file-info').textContent = t('fileInfo', videoMeta.name, iso(clockOf(videoMeta.duration)), iso(videoMeta.width + '×' + videoMeta.height), count(Math.round(videoMeta.duration * HZ)));
+  }
+  function applyLang() {
+    const h = document.documentElement; h.lang = lang; h.dir = rtl() ? 'rtl' : 'ltr';
+    document.title = t('docTitle');
+    document.querySelectorAll('[data-t]').forEach(e => { e.textContent = t(e.dataset.t); });
+    document.querySelectorAll('[data-tp]').forEach(e => { e.placeholder = t(e.dataset.tp); });
+    const lb = $('lang'); lb.textContent = t('otherLang'); lb.setAttribute('lang', rtl() ? 'en' : 'ar');
+    $('full').setAttribute('aria-label', t('full')); $('speed').setAttribute('aria-label', t('speed'));
+    fillColourSelects();
+    $('footer').innerHTML = t('footer');
+    showFileInfo(); playIcon();
+    if (statusKey) statusEl.textContent = t(statusKey[0], ...statusKey[1]);
+    if (backendKey) $('backend').textContent = t(backendKey);
+    if (errState && errState.key) errorEl.textContent = t(errState.key, ...errState.args);
+    if (R) renderDash();
+  }
+  $('lang').addEventListener('click', () => { lang = rtl() ? 'en' : 'ar'; try { localStorage.setItem('who-has-the-ball-lang', lang); } catch (e) { /* storage blocked */ } applyLang(); });
+  if (window.matchMedia) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const redraw = () => { if (R) renderDash(); };
+    if (mq.addEventListener) mq.addEventListener('change', redraw); else if (mq.addListener) mq.addListener(redraw);
+  }
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (R) { renderScrub(); renderMomentum(); syncTo(player.currentTime); } drawOverlay(); }, 150); });
 
   // ------------------------------------------------------------------ the run
   function findDuration(video) {
@@ -926,67 +1385,101 @@ a { color: inherit; }
       video.currentTime = 1e9;
     });
   }
-  fileInput.addEventListener('change', () => {
-    showError(''); const f = fileInput.files[0]; if (!f) return;
+  function setFile(f) {
+    if (!f || running) return;
+    showError('');
     if (videoURL) URL.revokeObjectURL(videoURL);
     videoURL = URL.createObjectURL(f); videoMeta = null; goBtn.disabled = true;
-    $('file-info').textContent = 'Reading ' + f.name + '...';
+    $('file-info').textContent = t('reading', f.name);
     const probe = document.createElement('video'); probe.preload = 'metadata'; probe.muted = true; probe.src = videoURL;
     probe.addEventListener('loadedmetadata', async () => {
       const duration = await findDuration(probe);
-      if (!(duration > 0)) { $('file-info').textContent = ''; showError('Could not read the length of ' + f.name + '. Try an MP4 (H.264) file.'); return; }
+      if (!(duration > 0)) { $('file-info').textContent = ''; showError(fail('errLength', f.name)); return; }
       videoMeta = {name: f.name, duration, width: probe.videoWidth, height: probe.videoHeight};
-      $('file-info').textContent = f.name + ': ' + clockOf(duration) + ', ' + probe.videoWidth + '×' + probe.videoHeight +
-        '. Analysing all of it means looking at about ' + Math.round(duration * HZ).toLocaleString() + ' frames.';
-      goBtn.disabled = false;
+      showFileInfo(); goBtn.disabled = false;
     }, {once: true});
-    probe.addEventListener('error', () => { $('file-info').textContent = ''; showError('This browser cannot read ' + f.name + '. Try an MP4 (H.264) file.'); }, {once: true});
-  });
+    probe.addEventListener('error', () => { $('file-info').textContent = ''; showError(fail('errRead')); }, {once: true});
+  }
+  fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); if (!running) drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) setFile(f); });
 
-  stopBtn.addEventListener('click', () => { cancelled = true; stopBtn.disabled = true; statusEl.textContent = 'Stopping after this frame...'; });
+  function buildGiven() {
+    const names = [$('nameA').value.trim(), $('nameB').value.trim()], cols = [$('colourA').value || null, $('colourB').value || null];
+    if (!names[0] && !names[1] && !cols[0] && !cols[1]) return {given: null, typed: false};
+    const given = [0, 1].map(k => [names[k] || MARK + (cols[k] || '#' + (k + 1)), cols[k]]);
+    return {given, typed: !!(names[0] || names[1])};
+  }
+
+  // A team the reader named keeps that name. With one colour given, that team goes to the closer kit.
+  // A team with neither name nor colour is called after the colour of its kit.
+  function nameTeams(teams, given) {
+    if (!given) teams.names = [MARK + '#1', MARK + '#2'];
+    else if (!given[0][1] !== !given[1][1]) {
+      const k = given[0][1] ? 0 : 1, ref = stdLab(COLOUR_WORDS[given[k][1]]);
+      const near = dist(stdLab(teams.colours[0]), ref) <= dist(stdLab(teams.colours[1]), ref) ? 0 : 1;
+      teams.names = near === k ? [given[0][0], given[1][0]] : [given[1][0], given[0][0]];
+    }
+    const words = teams.colours.map(colourName);
+    if (words[0] === words[1]) return;
+    for (const k of [0, 1]) {
+      const nm = teams.names[k];
+      if ((nm === MARK + '#1' || nm === MARK + '#2') && teams.names[1 - k] !== MARK + words[k]) teams.names[k] = MARK + words[k];
+    }
+  }
+
+  stopBtn.addEventListener('click', () => { cancelled = true; stopBtn.disabled = true; setStatus('stopping'); });
 
   goBtn.addEventListener('click', async () => {
     if (running || !videoMeta) return;
     showError('');
-    let given;
-    try { given = parseTeams($('teams').value); } catch (e) { showError(e.message); return; }
+    const {given, typed} = buildGiven();
     const t0 = parseClock($('from').value, 0), t1 = Math.min(videoMeta.duration, parseClock($('to').value, videoMeta.duration));
-    if (!(t0 >= 0) || !(t1 > t0)) { showError('Check the From and To times: write them like 1:30, and To must come after From.'); return; }
+    if (!(t0 >= 0) || !(t1 > t0)) { showError(fail('errTimes')); return; }
     running = true; cancelled = false; goBtn.disabled = true; fileInput.disabled = true; stopBtn.hidden = false; stopBtn.disabled = false;
+    $('backend').hidden = true; backendKey = null; setProgress(0, '');
     try {
       await loadModel();
+      backendKey = backend === 'WebGPU' ? 'backendGPU' : 'backendCPU'; $('backend').textContent = t(backendKey); $('backend').hidden = false;
       const vid = document.createElement('video'); vid.muted = true; vid.preload = 'auto'; vid.src = videoURL;
-      await new Promise((res, rej) => { vid.addEventListener('loadeddata', res, {once: true}); vid.addEventListener('error', () => rej(new Error('The browser could not read this video.')), {once: true}); });
-      const samples = await detectAll(vid, t0, t1, (k, n, t, left) => {
-        setProgress(0.1 + 0.88 * k / n, 'Frame ' + k.toLocaleString() + ' of ' + n.toLocaleString() + ' · ' + clockOf(t) + ' of the video · about ' +
-          (left < 90 ? Math.round(left) + ' s' : Math.round(left / 60) + ' min') + ' left · ' + backend + (backend === 'WASM' ? ' (no WebGPU here, so this is slow)' : ''));
+      await new Promise((res, rej) => { vid.addEventListener('loadeddata', res, {once: true}); vid.addEventListener('error', () => rej(fail('errRead')), {once: true}); });
+      const samples = await detectAll(vid, t0, t1, (k, n, tt, left) => {
+        setProgress(0.1 + 0.88 * k / n, t('frameStatus', count(k), count(n), iso(clockOf(tt)), left < 90 ? t('nSec', Math.round(left)) : t('nMin', Math.round(left / 60))));
       });
       vid.removeAttribute('src'); vid.load();
-      if (samples.length < 10) throw new Error(cancelled ? 'Stopped before enough of the video was analysed.' : 'Too little video to analyse.');
-      setProgress(0.99, 'Telling the teams apart and smoothing...');
+      if (samples.length < 10) throw fail(cancelled ? 'errStoppedEarly' : 'errShort');
+      setProgress(0.99, t('teamsStep'));
       await new Promise(r => setTimeout(r, 30));
-      const teams = fitTeams(samples, given);
+      let teams;
+      try { teams = fitTeams(samples, given); }
+      catch (e) { throw /Too few players/.test(e.message) ? fail('errFew') : /look alike/.test(e.message) ? fail('errSame') : e; }
       for (const s of samples) for (const p of s.people) p.team = teams.assign(p.colour);
+      nameTeams(teams, given);
       const {pos, source} = cleanBall(samples, videoMeta.width);
       const {proba, states} = possession(samples, pos);
       const summary = summarise(samples, states, source, teams, videoMeta.name, videoMeta);
+      summary.metrics = extraMetrics(samples, states, pos, source, summary);
       const cum = []; let ca = 0, cb = 0; states.forEach(s => { if (s === TEAM_A) ca++; else if (s === TEAM_B) cb++; cum.push([ca, cb]); });
-      R = {samples, states, proba, ball: pos, source, teams, summary, cum};
+      R = {samples, states, proba, ball: pos, source, teams, summary, cum, losses: cumulativeLosses(states),
+           t0: samples[0].t, t1: samples[samples.length - 1].t + 1 / HZ, customNames: typed, kitDisplay: teams.colours.map(displayColour)};
       window.__summary = summary; window.__result = R;
-      renderReport(summary);
-      $('player-card').hidden = false;
-      player.addEventListener('loadedmetadata', () => { player.currentTime = t0; drawOverlay(); }, {once: true});
+      lastI = -1;
+      player.addEventListener('loadedmetadata', () => { player.currentTime = R.t0; syncTo(R.t0); drawOverlay(); }, {once: true});
       player.src = videoURL;
-      const [a, b] = summary.teams;
-      setProgress(1, (cancelled ? 'Stopped early. ' : 'Done. ') + a.name + ' ' + (a.possession * 100).toFixed(0) + '%, ' + b.name + ' ' + (b.possession * 100).toFixed(0) +
-        '%. Ball found in ' + (summary.ball_seen_share * 100).toFixed(0) + '% of frames.');
+      renderDash();
+      setProgress(1); setStatus(cancelled ? 'stoppedEarly' : 'doneStatus');
+      $('dash').scrollIntoView({behavior: 'smooth', block: 'start'});
       window.__done = true;
     } catch (e) {
-      console.error(e); showError(e.message || String(e)); statusEl.textContent = ''; progress.hidden = true; window.__done = 'error';
+      console.error(e); showError(e); setStatus(null); $('progress-wrap').hidden = true; window.__done = 'error';
     } finally {
-      running = false; goBtn.disabled = false; fileInput.disabled = false; stopBtn.hidden = true;
+      running = false; goBtn.disabled = !videoMeta; fileInput.disabled = false; stopBtn.hidden = true;
     }
   });
+
+  applyLang();
 })();
 </script>
 </body>
