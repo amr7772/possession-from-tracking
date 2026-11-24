@@ -15,6 +15,8 @@
   --line: rgba(18,22,17,0.10); --line-2: rgba(18,22,17,0.22);
   --accent: #1c7a45; --accent-ink: #ffffff; --accent-soft: rgba(28,122,69,0.09);
   --series-1: #2a78d6; --series-2: #eb6834; --none: #d5d8d0; --danger: #b42318; --warn-bg: rgba(214,153,0,0.13);
+  --play: rgba(28,122,69,0.30); --stop: #9aa29b;
+  --pitch-bg: #e6ede2; --pitch-line: rgba(18,22,17,0.40); --pitch-view: rgba(255,255,255,0.62); --heat: 29,79,145;
   --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.05);
   --font: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -25,6 +27,8 @@
     --line: rgba(255,255,255,0.08); --line-2: rgba(255,255,255,0.18);
     --accent: #34a866; --accent-ink: #04130a; --accent-soft: rgba(52,168,102,0.13);
     --series-1: #3987e5; --series-2: #d95926; --none: #2f3730; --danger: #ff8f85; --warn-bg: rgba(214,153,0,0.16);
+    --play: rgba(52,168,102,0.38); --stop: #66706a;
+    --pitch-bg: #18221b; --pitch-line: rgba(255,255,255,0.34); --pitch-view: rgba(255,255,255,0.07); --heat: 142,197,255;
     --shadow: none;
   }
 }
@@ -119,8 +123,8 @@ input[type=text], select { font: inherit; font-size: 15px; color: var(--text); b
 .mini-split { display: flex; gap: 2px; height: 10px; margin: 6px 0 6px; }
 .mini-row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
 .mini-row span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
-@media (max-width: 820px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+@media (max-width: 1000px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .metrics { grid-template-columns: minmax(0, 1fr); } }
 .metric { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
 .m-title { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
@@ -136,6 +140,29 @@ input[type=text], select { font: inherit; font-size: 15px; color: var(--text); b
 .chart svg text { fill: var(--text-3); font-size: 12px; font-family: var(--font); font-variant-numeric: tabular-nums; }
 .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,0.14); display: none; white-space: nowrap; z-index: 3; }
 .tip .t-row { display: flex; align-items: center; gap: 6px; }
+.chart svg text.row-label { fill: var(--text-2); font-size: 12.5px; font-weight: 500; }
+.tip .tip-h { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.swatch { display: inline-block; width: 14px; height: 9px; border-radius: 2px; flex: none; }
+.swatch.stop { background: var(--stop); }
+.swatch.big { width: 18px; height: 18px; border-radius: 50%; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+.pitch-wrap { width: 100%; max-width: 760px; margin: 0 auto; }
+.pitch-wrap canvas { display: block; width: 100%; }
+.pitch-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 14px; color: var(--text-2); }
+#pitch-metrics { margin-top: -4px; }
+.chip-btn { font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--surface-2); border-color: var(--line); color: var(--text-2); }
+.chip-btn.on { background: var(--accent); border-color: transparent; color: var(--accent-ink); font-weight: 600; }
+.moments { max-height: 380px; overflow: auto; border-top: 1px solid var(--line); }
+.mrow { display: flex; align-items: center; gap: 10px; padding: 6px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.mrow .mtime { font-size: 13px; padding: 3px 10px; border-radius: 8px; font-variant-numeric: tabular-nums; flex: none; }
+.mrow .mtext { flex: 1; min-width: 0; }
+.mrow .mclip { width: 32px; height: 32px; }
+.mrow .mclip svg { width: 16px; height: 16px; }
+.mclip.busy { border-color: var(--accent); color: var(--accent); }
+textarea.summary { width: 100%; min-height: 150px; font: inherit; font-size: 15px; line-height: 1.8; color: var(--text); background: var(--surface-2);
+  border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; resize: vertical; }
+textarea.summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.video-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; color: var(--text-2); }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { text-align: start; padding: 7px 8px; border-bottom: 1px solid var(--line); }
 th { color: var(--text-2); font-weight: 500; }
@@ -143,6 +170,15 @@ td.num, th.num { text-align: end; font-variant-numeric: tabular-nums; }
 details summary { cursor: pointer; color: var(--text-2); font-size: 14px; margin-top: 4px; }
 .scroll { max-height: 340px; overflow: auto; margin-top: 8px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.xg-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 8px; }
+.xg-team { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.xg-team b { font-size: 26px; font-variant-numeric: tabular-nums; }
+.xg-team .sub2 { flex-basis: 100%; }
+.mrow .sxg { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 3.2em; }
+.mrow.rejected { opacity: .45; }
+.mrow .tog { font-size: 12px; padding: 3px 10px; }
+#pitch.adding { cursor: crosshair; }
+@media (max-width: 640px) { .xg-totals { grid-template-columns: 1fr; } }
 .method p, .method li { color: var(--text-2); font-size: 14px; }
 .method ul { padding-inline-start: 20px; margin: 10px 0; }
 footer { color: var(--text-3); font-size: 13px; margin-top: 26px; line-height: 1.9; }
@@ -213,12 +249,44 @@ footer a { color: inherit; }
       <aside class="card live" id="live" aria-live="off"></aside>
     </div>
     <div class="card">
-      <h2 data-t="momentum"></h2>
+      <h2 data-t="timelineTitle"></h2>
       <p class="note" id="momentum-note"></p>
       <div class="legend" id="momentum-legend"></div>
       <div class="chart" id="momentum"></div>
     </div>
     <div class="metrics" id="metrics"></div>
+    <div class="card" id="pitch-card" hidden>
+      <h2 data-t="pitchTitle"></h2>
+      <p class="note" id="pitch-off" hidden></p>
+      <div id="pitch-body">
+        <p class="note" data-t="pitchNote"></p>
+        <div class="chips" id="pitch-chips" role="group"></div>
+        <div class="pitch-wrap"><canvas id="pitch" role="img"></canvas></div>
+        <p class="note" id="pitch-heat-note" hidden></p>
+        <div class="pitch-foot"><span id="pitch-dir"></span><button id="pitch-flip" type="button" class="chip-btn" data-t="flipDir"></button></div>
+      </div>
+    </div>
+    <div class="metrics" id="pitch-metrics" hidden></div>
+    <div class="card" id="shots-card" hidden>
+      <h2 data-t="shotsTitle"></h2>
+      <p class="note" data-t="shotsNote"></p>
+      <div class="xg-totals" id="xg-totals"></div>
+      <div class="chart" id="xg-race"></div>
+      <div class="toolbar"><button id="shot-add" type="button" data-t="shotAdd"></button><span class="note" id="shot-hint" aria-live="polite"></span></div>
+      <div class="moments" id="shot-list"></div>
+    </div>
+    <div class="card">
+      <h2 data-t="momentsTitle"></h2>
+      <p class="note" data-t="momentsNote"></p>
+      <div class="chips" id="moment-chips" role="group"></div>
+      <div class="moments" id="moments"></div>
+    </div>
+    <div class="card">
+      <h2 data-t="summaryTitle"></h2>
+      <p class="note" data-t="summaryNote"></p>
+      <textarea class="summary" id="summary-text" dir="auto" spellcheck="false"></textarea>
+      <div class="toolbar"><button id="copy-summary" type="button" data-t="copy"></button></div>
+    </div>
     <div class="card">
       <h2 data-t="spellsTitle"></h2>
       <details><summary data-t="spellsShow"></summary><div class="scroll"><table id="spells-table"></table></div></details>
@@ -229,12 +297,16 @@ footer a { color: inherit; }
         <button id="dl-png" type="button" data-t="dlPng"></button>
         <button id="dl-csv" type="button" data-t="dlCsv"></button>
         <button id="dl-json" type="button" data-t="dlJson"></button>
+        <button id="dl-video" type="button" data-t="dlVideo"></button>
         <button id="again" type="button" data-t="again"></button>
       </div>
+      <div class="video-row"><span id="video-note" data-t="videoNote"></span><span id="video-status" aria-live="polite"></span>
+        <button id="video-cancel" type="button" hidden data-t="videoCancel"></button></div>
     </div>
     <div class="card method">
       <h2 data-t="methodTitle"></h2>
       <p data-t="method1"></p>
+      <p data-t="method2"></p>
       <ul id="quality"></ul>
       <p data-t="limits"></p>
     </div>
@@ -517,6 +589,16 @@ footer a { color: inherit; }
     const small = document.createElement('canvas'); small.width = sw; small.height = sh;
     const sctx = small.getContext('2d', {willReadFrequently: true}); sctx.imageSmoothingQuality = 'high';
     const input = new Float32Array(3 * IN_W * IN_H), plane = IN_W * IN_H;
+    const cw = CAL_W, ch = Math.max(1, Math.round(vh * CAL_W / vw)), cscale = cw / vw;
+    const cal = document.createElement('canvas'); cal.width = cw; cal.height = ch;
+    const cctx = cal.getContext('2d', {willReadFrequently: true}); cctx.imageSmoothingQuality = 'high';
+    const calib = makeCalibrator(cw, ch, cscale); let job = null;
+    const runJob = () => {
+      if (!job) return;
+      try { const r = calib.step(job.px, job.s); if (r) job.s.cam = {C: r.C.slice(), z: Array.from(r.z), cost: r.cost, w: cw, h: ch, s: cscale}; }
+      catch (e) { console.warn('pitch mapping failed on one frame', e); }
+      job = null;
+    };
     const n = Math.max(1, Math.floor((t1 - t0) * HZ + 1e-9));
     const samples = [], started = performance.now();
     const target = k => Math.min(t0 + k / HZ + 0.001, Math.max(0, video.duration - 0.001));
@@ -527,6 +609,7 @@ footer a { color: inherit; }
       await pending;
       bctx.drawImage(video, lb.left, lb.top, nw, nh);
       sctx.drawImage(video, 0, 0, sw, sh);
+      cctx.drawImage(video, 0, 0, cw, ch);
       // The next frame decodes while this one is analysed.
       pending = k + 1 < n ? seek(video, target(k + 1)) : null;
       if (pending) pending.catch(() => {});
@@ -534,6 +617,7 @@ footer a { color: inherit; }
       for (let i = 0, j = 0; i < plane; i++, j += 4) { input[i] = px[j] / 255; input[plane + i] = px[j + 1] / 255; input[2 * plane + i] = px[j + 2] / 255; }
       const inference = session.run({images: new ort.Tensor('float32', input, [1, 3, IN_H, IN_W])});
       const pm = pitchMask(sctx.getImageData(0, 0, sw, sh).data, sw, sh);   // the processor works while the detector runs
+      runJob();                                  // ...and maps the previous frame onto the pitch
       const out = await inference;
       const det = out[session.outputNames[0]].data;
       const s = {t, share: pm.share, people: [], ball: null, ballConf: 0};
@@ -551,9 +635,11 @@ footer a { color: inherit; }
         }
       }
       samples.push(s);
+      job = {px: cctx.getImageData(0, 0, cw, ch).data, s};
       const el = (performance.now() - started) / 1000, left = el / (k + 1) * (n - k - 1);
       onStep(k + 1, n, t, left);
     }
+    if (!cancelled) runJob();
     return samples;
   }
 
@@ -735,49 +821,872 @@ footer a { color: inherit; }
   }
 
 
+  // ------------------------------------------------------------------ pitch calibration
+  // The main camera is modelled as a fixed point in the stand that pans, tilts and zooms.
+  // Pitch metres: x along the length (0..105, left to right as the main camera sees it),
+  // y across (0 at the near touchline, 68 at the far one).
+  const PL = 105, PW = 68, CAL_W = 640, CAL_CELL = 10;
+  const CAL_TRACK_MAX = 0.40, CAL_ACCEPT = 0.45, CAL_MIN_SHARE = 0.45;
+  const PITCH_LINES = (() => {
+    const s = [[0, 0, PL, 0], [0, PW, PL, PW], [0, 0, 0, PW], [PL, 0, PL, PW], [PL / 2, 0, PL / 2, PW]];
+    for (const [x0, g] of [[0, 1], [PL, -1]]) {
+      s.push([x0, 34 - 20.16, x0 + g * 16.5, 34 - 20.16], [x0, 34 + 20.16, x0 + g * 16.5, 34 + 20.16], [x0 + g * 16.5, 34 - 20.16, x0 + g * 16.5, 34 + 20.16]);
+      s.push([x0, 34 - 9.16, x0 + g * 5.5, 34 - 9.16], [x0, 34 + 9.16, x0 + g * 5.5, 34 + 9.16], [x0 + g * 5.5, 34 - 9.16, x0 + g * 5.5, 34 + 9.16]);
+    }
+    const arc = (cx, cy, a0, a1, n) => { for (let k = 0; k < n; k++) { const p = a0 + (a1 - a0) * k / n, q = a0 + (a1 - a0) * (k + 1) / n;
+      s.push([cx + 9.15 * Math.cos(p), cy + 9.15 * Math.sin(p), cx + 9.15 * Math.cos(q), cy + 9.15 * Math.sin(q)]); } };
+    arc(PL / 2, 34, 0, 2 * Math.PI, 32);
+    const lim = Math.acos(5.5 / 9.15);
+    arc(11, 34, -lim, lim, 8); arc(PL - 11, 34, Math.PI - lim, Math.PI + lim, 8);
+    return s;
+  })();
+  function pitchPoints(step) {
+    const out = [];
+    for (const [x1, y1, x2, y2] of PITCH_LINES) {
+      const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / step));
+      for (let k = 0; k < n; k++) out.push(x1 + (x2 - x1) * k / n, y1 + (y2 - y1) * k / n);
+    }
+    return Float64Array.from(out);
+  }
+  const PTS1 = pitchPoints(1.0), PTS2 = pitchPoints(2.0);
+
+  // ---- what a frame shows: grass, the white lines on it, and how far every pixel is from a line
+  function maxMin(src, w, h, r, isMax) {        // square max/min filter, separable; outside pixels are ignored
+    const tmp = new Uint8Array(w * h), out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let m = isMax ? 0 : 1; const a = Math.max(0, x - r), b = Math.min(w - 1, x + r), row = y * w;
+      for (let k = a; k <= b; k++) { const v = src[row + k]; if (isMax ? v > m : v < m) { m = v; if (m === (isMax ? 1 : 0)) break; } }
+      tmp[row + x] = m;
+    }
+    for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) {
+      let m = isMax ? 0 : 1; const a = Math.max(0, y - r), b = Math.min(h - 1, y + r);
+      for (let k = a; k <= b; k++) { const v = tmp[k * w + x]; if (isMax ? v > m : v < m) { m = v; if (m === (isMax ? 1 : 0)) break; } }
+      out[y * w + x] = m;
+    }
+    return out;
+  }
+  function boxBlur(src, w, h, r) {              // mean over a (2r+1)² window, edges replicated
+    const tmp = new Float32Array(w * h), out = new Float32Array(w * h), k = 2 * r + 1;
+    for (let y = 0; y < h; y++) { const row = y * w; let s = 0;
+      for (let i = -r; i <= r; i++) s += src[row + Math.min(w - 1, Math.max(0, i))];
+      for (let x = 0; x < w; x++) { tmp[row + x] = s / k;
+        s += src[row + Math.min(w - 1, x + r + 1)] - src[row + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let s = 0;
+      for (let i = -r; i <= r; i++) s += tmp[Math.min(h - 1, Math.max(0, i)) * w + x];
+      for (let y = 0; y < h; y++) { out[y * w + x] = s / k;
+        s += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; } }
+    return out;
+  }
+  function chamfer(on, w, h) {                  // distance to the nearest 'on' pixel, OpenCV's 3×3 L2 chamfer (a 0.955, b 1.3693)
+    const A = 0.955, B = 1.3693, d = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) d[i] = on[i] ? 0 : 1e6;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x; let v = d[i], t; if (v === 0) continue;
+      if (x > 0 && (t = d[i - 1] + A) < v) v = t;
+      if (y > 0) { if ((t = d[i - w] + A) < v) v = t; if (x > 0 && (t = d[i - w - 1] + B) < v) v = t; if (x < w - 1 && (t = d[i - w + 1] + B) < v) v = t; }
+      d[i] = v;
+    }
+    for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x; let v = d[i], t; if (v === 0) continue;
+      if (x < w - 1 && (t = d[i + 1] + A) < v) v = t;
+      if (y < h - 1) { if ((t = d[i + w] + A) < v) v = t; if (x < w - 1 && (t = d[i + w + 1] + B) < v) v = t; if (x > 0 && (t = d[i + w - 1] + B) < v) v = t; }
+      d[i] = v;
+    }
+    return d;
+  }
+  // linear-light luminance in fixed point, then OpenCV's 8-bit Lab lightness from a table
+  const YR = new Int32Array(256), YG = new Int32Array(256), YB = new Int32Array(256), L_OF = new Float32Array(4097);
+  for (let i = 0; i < 256; i++) { const c = i / 255, y = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    YR[i] = Math.round(0.212671 * y * 1048576); YG[i] = Math.round(0.715160 * y * 1048576); YB[i] = Math.round(0.072169 * y * 1048576); }
+  for (let i = 0; i <= 4096; i++) { const Y = i / 4096; L_OF[i] = (Y > 0.008856 ? 116 * Math.cbrt(Y) - 16 : 903.3 * Y) * 2.55; }
+  // px: RGBA, w×h (w = CAL_W); boxes: people in the same pixels. Returns null when there is too little to go on.
+  function calibFeatures(px, w, h, boxes) {
+    const n = w * h, L = new Float32Array(n), low = new Uint8Array(n);
+    for (let i = 0, j = 0; i < n; i++, j += 4) {
+      const r = px[j], g = px[j + 1], b = px[j + 2], mx = r > g ? (r > b ? r : b) : (g > b ? g : b), mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+      low[i] = (mx - mn) * 510 < 179 * mx ? 1 : 0;                 // saturation below 90 of 255
+      L[i] = L_OF[(YR[r] + YG[g] + YB[b] + 128) >> 8];
+    }
+    // grass, at half size, then closed so that lines and players count as pitch
+    const hw = w >> 1, hh = h >> 1, g2 = new Uint8Array(hw * hh);
+    for (let y = 0; y < hh; y++) for (let x = 0; x < hw; x++) {
+      const j = 4 * (2 * y * w + 2 * x), r = px[j], g = px[j + 1], b = px[j + 2];
+      const mx = r > g ? (r > b ? r : b) : (g > b ? g : b), mn = r < g ? (r < b ? r : b) : (g < b ? g : b), dd = mx - mn;
+      if (!dd || mx < 40 || dd * 255 < 50 * mx) continue;
+      let hue = mx === r ? 60 * (g - b) / dd : mx === g ? 120 + 60 * (b - r) / dd : 240 + 60 * (r - g) / dd; if (hue < 0) hue += 360;
+      const hc = Math.round(hue / 2); if (hc >= 30 && hc <= 90) g2[y * hw + x] = 1;
+    }
+    const m2 = maxMin(maxMin(g2, hw, hh, 2, true), hw, hh, 2, false), col = new Int32Array(w);
+    for (let x = 0; x < w; x++) col[x] = Math.min(hw - 1, x >> 1);
+    const mean = boxBlur(L, w, h, 5), line = new Uint8Array(n);
+    for (let y = 0; y < h; y++) { const my = Math.min(hh - 1, y >> 1) * hw, row = y * w;
+      for (let x = 0; x < w; x++) { const i = row + x; line[i] = m2[my + col[x]] && low[i] && L[i] - mean[i] > 14 ? 1 : 0; } }
+    for (const bx of boxes) {
+      const x1 = Math.max(0, Math.round(bx[0]) - 2), x2 = Math.min(w - 1, Math.round(bx[2]) + 2), y1 = Math.max(0, Math.round(bx[1]) - 2), y2 = Math.min(h - 1, Math.round(bx[3]) + 2);
+      for (let y = y1; y <= y2; y++) line.fill(0, y * w + x1, y * w + x2 + 1);
+    }
+    let count = 0; for (let i = 0; i < n; i++) count += line[i];
+    if (count < 150) return null;
+    const dt = chamfer(line, w, h);
+    const rng = mulberry32(count), take = Math.min(400, count), lp = new Float64Array(2 * take);   // a fixed random sample of line pixels
+    let need = take, left = count, k = 0;
+    for (let i = 0; i < n && need; i++) if (line[i]) { if (rng() * left < need) { lp[2 * k] = i % w; lp[2 * k + 1] = (i / w) | 0; k++; need--; } left--; }
+    const gw = Math.round(w / CAL_CELL), gh = Math.round(h / CAL_CELL), small = new Uint8Array(gw * gh), c2 = CAL_CELL >> 1;
+    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) { let on = 0, tot = 0;
+      for (let y = gy * c2; y < Math.min(hh, (gy + 1) * c2); y++) for (let x = gx * c2; x < Math.min(hw, (gx + 1) * c2); x++) { on += m2[y * hw + x]; tot++; }
+      small[gy * gw + gx] = on > 0.5 * tot ? 1 : 0; }
+    return {w, h, dt, lp, gw, gh, small, count};
+  }
+
+  // ---- the camera
+  function camAxes(pan, tilt) {                 // forward, right, down
+    const cp = Math.cos(pan), sp = Math.sin(pan), ct = Math.cos(tilt), st = Math.sin(tilt);
+    return [sp * ct, cp * ct, -st, cp, -sp, 0, -sp * st, -cp * st, -ct];
+  }
+  function projectGround(C, z, x, y, w, h) {   // pitch metres -> pixels of the calibration image, or null behind the camera
+    const a = camAxes(z[0], z[1]), dx = x - C[0], dy = y - C[1], dz = -C[2];
+    const zc = dx * a[0] + dy * a[1] + dz * a[2]; if (zc <= 0.5) return null;
+    return [w / 2 + z[2] * (dx * a[3] + dy * a[4]) / zc, h / 2 + z[2] * (dx * a[6] + dy * a[7] + dz * a[8]) / zc];
+  }
+  function groundOf(C, z, u, v, w, h) {        // pixels of the calibration image -> pitch metres, or null above the horizon
+    const a = camAxes(z[0], z[1]), p = (u - w / 2) / z[2], q = (v - h / 2) / z[2];
+    const rx = a[0] + p * a[3] + q * a[6], ry = a[1] + p * a[4] + q * a[7], rz = a[2] + q * a[8];
+    if (rz >= -1e-6) return null;
+    const t = -C[2] / rz; return [C[0] + t * rx, C[1] + t * ry];
+  }
+
+  // ---- how well a camera explains a frame: model lines on image lines, image lines on model lines, and the grass outline
+  function costForward(F, C, z, tau, P) {
+    const a = camAxes(z[0], z[1]), f = z[2], w = F.w, h = F.h, dz = -C[2];
+    let sum = 0, n = 0;
+    for (let i = 0; i < P.length; i += 2) {
+      const dx = P[i] - C[0], dy = P[i + 1] - C[1], zc = dx * a[0] + dy * a[1] + dz * a[2];
+      if (zc <= 0.5) continue;
+      const u = w / 2 + f * (dx * a[3] + dy * a[4]) / zc, v = h / 2 + f * (dx * a[6] + dy * a[7] + dz * a[8]) / zc;
+      if (u < 0 || u >= w - 1 || v < 0 || v >= h - 1) continue;
+      const d = F.dt[(v | 0) * w + (u | 0)]; sum += d < tau ? d / tau : 1; n++;
+    }
+    return {cost: n >= 60 ? sum / n : 1, n};
+  }
+  const SEG = new Float64Array(PITCH_LINES.length * 4);
+  function costReverse(F, C, z, tau) {
+    const a = camAxes(z[0], z[1]), f = z[2], w = F.w, h = F.h, dz = -C[2];
+    let m = 0, seen = 0;
+    for (const [x1, y1, x2, y2] of PITCH_LINES) {
+      let ax = x1 - C[0], ay = y1 - C[1], bx = x2 - C[0], by = y2 - C[1];
+      let za = ax * a[0] + ay * a[1] + dz * a[2], zb = bx * a[0] + by * a[1] + dz * a[2];
+      if (za <= 0.5 && zb <= 0.5) continue;
+      if (za <= 0.5 || zb <= 0.5) {              // clip at the near plane
+        const t = (0.5 - za) / (zb - za), cx = ax + t * (bx - ax), cy = ay + t * (by - ay);
+        if (za <= 0.5) { ax = cx; ay = cy; za = 0.5 + 1e-9; } else { bx = cx; by = cy; zb = 0.5 + 1e-9; }
+      }
+      const ua = w / 2 + f * (ax * a[3] + ay * a[4]) / za, va = h / 2 + f * (ax * a[6] + ay * a[7] + dz * a[8]) / za;
+      const ub = w / 2 + f * (bx * a[3] + by * a[4]) / zb, vb = h / 2 + f * (bx * a[6] + by * a[7] + dz * a[8]) / zb;
+      if (Math.max(ua, ub) < -tau || Math.min(ua, ub) > w + tau || Math.max(va, vb) < -tau || Math.min(va, vb) > h + tau) continue;
+      if (Math.max(ua, ub) >= 0 && Math.min(ua, ub) < w && Math.max(va, vb) >= 0 && Math.min(va, vb) < h) seen++;
+      SEG[4 * m] = ua; SEG[4 * m + 1] = va; SEG[4 * m + 2] = ub; SEG[4 * m + 3] = vb; m++;
+    }
+    if (seen < 2) return 1;
+    const lp = F.lp, t2 = tau * tau; let sum = 0;
+    for (let i = 0; i < lp.length; i += 2) {
+      const px = lp[i], py = lp[i + 1]; let best = t2;
+      for (let s = 0; s < m; s++) {
+        const ua = SEG[4 * s], va = SEG[4 * s + 1], ub = SEG[4 * s + 2], vb = SEG[4 * s + 3];
+        if (px < Math.min(ua, ub) - tau || px > Math.max(ua, ub) + tau || py < Math.min(va, vb) - tau || py > Math.max(va, vb) + tau) continue;
+        const ex = ub - ua, ey = vb - va, L2 = ex * ex + ey * ey;
+        let t = L2 > 0 ? ((px - ua) * ex + (py - va) * ey) / L2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const qx = ua + t * ex - px, qy = va + t * ey - py, d2 = qx * qx + qy * qy;
+        if (d2 < best) best = d2;
+      }
+      sum += Math.sqrt(best) / tau;
+    }
+    return sum / (lp.length / 2);
+  }
+  function costOutline(F, C, z) {               // 1 - IoU of the pitch (plus 3 m) and the grass, on a 10-pixel grid
+    const a = camAxes(z[0], z[1]), f = z[2], w = F.w, h = F.h;
+    let inter = 0, uni = 0;
+    for (let gy = 0; gy < F.gh; gy++) { const q = ((gy + 0.5) * CAL_CELL - h / 2) / f;
+      for (let gx = 0; gx < F.gw; gx++) { const p = ((gx + 0.5) * CAL_CELL - w / 2) / f;
+        const rz = a[2] + q * a[8]; let on = false;
+        if (rz < -1e-6) { const t = -C[2] / rz, x = C[0] + t * (a[0] + p * a[3] + q * a[6]), y = C[1] + t * (a[1] + p * a[4] + q * a[7]);
+          on = x > -3 && x < PL + 3 && y > -3 && y < PW + 3; }
+        const g = F.small[gy * F.gw + gx] === 1;
+        if (on && g) inter++; if (on || g) uni++;
+      } }
+    return 1 - inter / Math.max(uni, 1);
+  }
+  function calibCost(F, C, z, tau) {
+    const fw = costForward(F, C, z, tau, PTS1);
+    return 0.4 * fw.cost + 0.4 * (fw.n < 8 ? 1 : costReverse(F, C, z, tau)) + 0.2 * costOutline(F, C, z);
+  }
+
+  // ---- search
+  function nelderMead(fn, x0, step, maxIter, xtol, ftol) {
+    const d = x0.length, S = [Float64Array.from(x0)];
+    for (let i = 0; i < d; i++) { const p = Float64Array.from(x0); p[i] += step[i]; S.push(p); }
+    let V = S.map(fn), it = 0;
+    const order = () => { const idx = V.map((_, i) => i).sort((i, j) => V[i] - V[j]); const s2 = idx.map(i => S[i]), v2 = idx.map(i => V[i]); S.splice(0, S.length, ...s2); V = v2; };
+    order();
+    while (it++ < maxIter) {
+      let xs = 0, fs = 0;
+      for (let i = 1; i <= d; i++) { fs = Math.max(fs, Math.abs(V[i] - V[0])); for (let k = 0; k < d; k++) xs = Math.max(xs, Math.abs(S[i][k] - S[0][k]) / (xtol[k] || 1)); }
+      if (xs <= 1 && fs <= ftol) break;
+      const c = new Float64Array(d); for (let i = 0; i < d; i++) for (let k = 0; k < d; k++) c[k] += S[i][k] / d;
+      const at = t => { const p = new Float64Array(d); for (let k = 0; k < d; k++) p[k] = c[k] + t * (S[d][k] - c[k]); return p; };
+      const r = at(-1), fr = fn(r);
+      if (fr < V[0]) { const e = at(-2), fe = fn(e); if (fe < fr) { S[d] = e; V[d] = fe; } else { S[d] = r; V[d] = fr; } }
+      else if (fr < V[d - 1]) { S[d] = r; V[d] = fr; }
+      else {
+        const k = fr < V[d] ? at(-0.5) : at(0.5), fk = fn(k);
+        if (fk < Math.min(fr, V[d])) { S[d] = k; V[d] = fk; }
+        else for (let i = 1; i <= d; i++) { for (let q = 0; q < d; q++) S[i][q] = S[0][q] + 0.5 * (S[i][q] - S[0][q]); V[i] = fn(S[i]); }
+      }
+      order();
+    }
+    return {x: S[0], f: V[0]};
+  }
+  const Z_STEP = [0.01, 0.01, 0.05], Z_TOL = [1e-4, 1e-4, 0.05], Z_TOL_FAST = [4e-4, 4e-4, 0.3];
+  function refineCam(F, C, z, taus, iters, scale, tol) {
+    for (const tau of taus) z = nelderMead(q => calibCost(F, C, q, tau), z, [Z_STEP[0] * scale, Z_STEP[1] * scale, Z_STEP[2] * scale * z[2]], iters, tol || Z_TOL, tol ? 1e-4 : 1e-5).x;
+    return {z, cost: calibCost(F, C, z, 8)};
+  }
+  const RAD = Math.PI / 180;
+  const range = (a, b, s) => { const r = []; for (let v = a; v <= b + 1e-9; v += s) r.push(v * RAD); return r; };
+  const geom = (a, k, n) => Array.from({length: n}, (_, i) => a * Math.pow(k, i));
+  // Scores every camera on a grid with the model lines alone: their mean distance to image lines ('fwd', lower is better)
+  // and how many of them land on lines ('cover', higher is better). Keeps the best few of each.
+  function gridSearch(F, C, pans, tilts, fs, P, keep) {
+    const npt = P.length / 2, xr = new Float64Array(npt), yr = new Float64Array(npt), ok = new Uint8Array(npt);
+    const w = F.w, h = F.h, dz = -C[2], tau = 30, best = [], top = [];
+    const push = (list, score, z) => { if (list.length < keep || score < list[list.length - 1][0]) { list.push([score, z]); list.sort((p, q) => p[0] - q[0]); if (list.length > keep) list.pop(); } };
+    for (const pan of pans) for (const tilt of tilts) {
+      const a = camAxes(pan, tilt);
+      for (let i = 0; i < npt; i++) { const dx = P[2 * i] - C[0], dy = P[2 * i + 1] - C[1], zc = dx * a[0] + dy * a[1] + dz * a[2];
+        ok[i] = zc > 0.5 ? 1 : 0; if (ok[i]) { xr[i] = (dx * a[3] + dy * a[4]) / zc; yr[i] = (dx * a[6] + dy * a[7] + dz * a[8]) / zc; } }
+      for (const f of fs) {
+        let sum = 0, n = 0, cover = 0;
+        for (let i = 0; i < npt; i++) { if (!ok[i]) continue;
+          const u = w / 2 + f * xr[i], v = h / 2 + f * yr[i];
+          if (u < 0 || u >= w - 1 || v < 0 || v >= h - 1) continue;
+          const d = F.dt[(v | 0) * w + (u | 0)], s = d < tau ? d / tau : 1; sum += s; n++; cover += 0.65 - s; }
+        const z = [pan, tilt, f];
+        push(best, n >= 30 ? sum / n : 1, z); push(top, -cover, z);
+      }
+    }
+    return best.concat(top).map(q => q[1]);
+  }
+  const PAN_GRID = range(-60, 60, 1.5), TILT_GRID = range(4, 50, 1.0), F_GRID = geom(300, 1.07, 36);
+  function relocalise(F, C) {
+    const cands = gridSearch(F, C, PAN_GRID, TILT_GRID, F_GRID, PTS2, 25);
+    const scored = cands.map(z => [calibCost(F, C, z, 30), z]).sort((p, q) => p[0] - q[0]).slice(0, 5);
+    let best = null;
+    for (const [, z] of scored) { const r = refineCam(F, C, z, [16, 8], 300, 1); if (!best || r.cost < best.cost) best = r; }
+    return best;
+  }
+  // First frame: the camera's place in the stand is unknown too, so try a few.
+  function firstCamera(F) {
+    const pans = range(-60, 60, 2), tilts = range(4, 50, 1.5), fs = geom(300, 1.1, 25), cands = [];
+    for (const cy of [-20, -35, -50, -70]) for (const cz of [15, 25, 35, 45]) {
+      const C = [PL / 2, cy, cz];
+      for (const z of gridSearch(F, C, pans, tilts, fs, PTS2, 30).slice(0, 30)) cands.push([C, z]);
+    }
+    const scored = cands.map(([C, z]) => [calibCost(F, C, z, 30), C, z]).sort((p, q) => p[0] - q[0]).slice(0, 8);
+    let best = null;
+    for (const [, C, z] of scored) {
+      let x = Float64Array.from([...C, ...z]);
+      for (const tau of [16, 8]) x = nelderMead(q => calibCost(F, [q[0], q[1], q[2]], [q[3], q[4], q[5]], tau), x, [2, 3, 2, 0.01, 0.01, 0.05 * x[5]], 800, [0.01, 0.01, 0.01, 1e-4, 1e-4, 0.05], 1e-5).x;
+      const c = calibCost(F, [x[0], x[1], x[2]], [x[3], x[4], x[5]], 8);
+      if (!best || c < best.cost) best = {C: [x[0], x[1], x[2]], z: [x[3], x[4], x[5]], cost: c};
+    }
+    return best;
+  }
+  // One place in the stand that explains several different views at once.
+  function jointPosition(Fs, C0, zs) {
+    const cur = zs.map(z => Float64Array.from(z));
+    const outer = C => { let tot = 0; Fs.forEach((F, i) => { const r = refineCam(F, C, cur[i], [8], 80, 0.5); cur[i] = r.z; tot += r.cost; }); return tot / Fs.length; };
+    const r = nelderMead(q => outer([q[0], q[1], q[2]]), Float64Array.from(C0), [3, 4, 3], 60, [0.05, 0.05, 0.05], 1e-4);
+    return {C: [r.x[0], r.x[1], r.x[2]], cost: r.f};
+  }
+  // How the picture moved between two samples, from players of the same team: shift (calibration pixels) and zoom.
+  function viewMotion(a, b, s) {
+    if (!a || !b || a.people.length < 4 || b.people.length < 4) return null;
+    const ft = p => [(p.box[0] + p.box[2]) / 2 * s, p.box[3] * s], ht = p => (p.box[3] - p.box[1]) * s;
+    const hs = a.people.map(ht).sort((x, y) => x - y), cell = 0.1 * hs[hs.length >> 1], pairs = [], votes = new Map();
+    for (const p of a.people) { const fp = ft(p), hp = ht(p);
+      for (const q of b.people) {
+        if (p.team !== q.team || Math.abs(ht(q) - hp) > 0.35 * hp) continue;
+        const fq = ft(q), dx = fq[0] - fp[0], dy = fq[1] - fp[1];
+        if (Math.hypot(dx, dy) > 3 * hp) continue;
+        pairs.push([dx, dy, ht(q) / hp]);
+        const kx = Math.round(dx / cell), ky = Math.round(dy / cell);
+        for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) { const key = (kx + ox) + ',' + (ky + oy); votes.set(key, (votes.get(key) || 0) + 1); }
+      } }
+    if (pairs.length < 4) return null;
+    let bk = null, bn = 0; for (const [k, n] of votes) if (n > bn) { bn = n; bk = k; }
+    const [bx, by] = bk.split(',').map(Number), near = pairs.filter(p => Math.hypot(p[0] - bx * cell, p[1] - by * cell) < 2 * cell);
+    return {shift: [near.reduce((t, p) => t + p[0], 0) / near.length, near.reduce((t, p) => t + p[1], 0) / near.length], zoom: median(near.map(p => p[2]))};
+  }
+  function predictCam(C, z, m, w, h) {          // the camera that moves the picture's centre by the observed shift
+    const z2 = [z[0], z[1], z[2] * m.zoom], g = groundOf(C, z2, w / 2, h / 2, w, h);
+    if (!g) return null;
+    const e = 1e-3, base = projectGround(C, z2, g[0], g[1], w, h), dp = projectGround(C, [z2[0] + e, z2[1], z2[2]], g[0], g[1], w, h), dt = projectGround(C, [z2[0], z2[1] + e, z2[2]], g[0], g[1], w, h);
+    if (!base || !dp || !dt) return null;
+    const j11 = (dp[0] - base[0]) / e, j21 = (dp[1] - base[1]) / e, j12 = (dt[0] - base[0]) / e, j22 = (dt[1] - base[1]) / e, det = j11 * j22 - j12 * j21;
+    if (Math.abs(det) < 1e-9) return null;
+    const sx = m.shift[0], sy = m.shift[1];
+    return [z2[0] + (j22 * sx - j12 * sy) / det, z2[1] + (-j21 * sx + j11 * sy) / det, z2[2]];
+  }
+  function trackCam(F, C, prev, guess) {
+    // usually the picture moved a little: one short search from the better of the two starting points
+    let start = prev;
+    if (guess && calibCost(F, C, guess, 8) < calibCost(F, C, prev, 8)) start = guess;
+    const quick = refineCam(F, C, start, [10], 100, 0.3, Z_TOL_FAST);
+    if (quick.cost <= CAL_TRACK_MAX) return quick;
+    let best = quick;                            // a harder move: several starts and a wider search
+    for (const z of [prev, guess, [prev[0], prev[1], prev[2] * 1.08], [prev[0], prev[1], prev[2] * 0.93]]) {
+      if (!z) continue; const r = refineCam(F, C, z, [16, 8], 300, 1); if (r.cost < best.cost) best = r;
+    }
+    return best;
+  }
+  // Follows the main camera through the video, one sample at a time.
+  // step() returns {C, z, cost} for a sample it could map onto the pitch, else null.
+  function makeCalibrator(w, h, scale) {
+    let C = null, prev = null, last = null, nextTry = 0, tries = 0, cooldown = -1, joined = false, keys = [];
+    const st = {mapped: 0, seen: 0, busy: null};
+    function remember(F, z, t) {               // a few different views for working out where the camera stands
+      if (joined || keys.length >= 5) return;
+      if (keys.length && t - keys[keys.length - 1].t < 2) return;
+      if (keys.some(k => Math.abs(k.z[0] - z[0]) < 4 * RAD && Math.abs(Math.log(k.z[2] / z[2])) < 0.12)) return;
+      keys.push({F, z: z.slice(), t});
+    }
+    function step(px, sample) {
+      st.seen++;
+      const ok = sample.share >= CAL_MIN_SHARE;
+      const F = ok ? calibFeatures(px, w, h, sample.people.map(p => p.box.map(v => v * scale))) : null;
+      const before = last; last = sample;
+      if (!F) { prev = null; return null; }
+      if (!C) {
+        if (tries >= 12 || sample.t < nextTry) return null;
+        tries++; nextTry = sample.t + 2;
+        const r = firstCamera(F);
+        if (!r || r.cost > 0.33) return null;
+        C = r.C; prev = r.z; remember(F, r.z, sample.t); st.mapped++;
+        return {C, z: r.z, cost: r.cost};
+      }
+      let r = null;
+      if (prev) {
+        const m = viewMotion(before, sample, scale);
+        r = trackCam(F, C, prev, m ? predictCam(C, prev, m, w, h) : null);
+      }
+      if ((!r || r.cost > CAL_ACCEPT) && sample.t >= cooldown) {
+        const q = relocalise(F, C);
+        if (!r || q.cost < r.cost) r = q;
+        if (r.cost > CAL_ACCEPT) cooldown = sample.t + 1;    // nothing fits: give the picture a second before trying again
+      }
+      if (!r || r.cost > CAL_ACCEPT) { prev = null; return null; }
+      remember(F, r.z, sample.t);
+      if (!joined && keys.length >= 5) {         // enough different views: settle the camera's place in the stand once
+        joined = true;
+        const J = jointPosition(keys.map(k => k.F), C, keys.map(k => k.z));
+        keys = [];
+        const C2 = J.C, again = trackCam(F, C2, r.z, null);
+        if (again.cost <= CAL_ACCEPT + 0.02) { C = C2; r = again; }
+      }
+      prev = r.z; st.mapped++;
+      return {C, z: r.z, cost: r.cost};
+    }
+    return {step, stats: st, get C() { return C; }};
+  }
+  // A sample's people and ball in pitch metres (null where the camera was not mapped).
+  function pitchOf(cam, xy, scale, w, h) {
+    if (!cam || !xy) return null;
+    const g = groundOf(cam.C, cam.z, xy[0] * scale, xy[1] * scale, w, h);
+    return g && g[0] > -15 && g[0] < PL + 15 && g[1] > -15 && g[1] < PW + 15 ? g : null;
+  }
+
   // ------------------------------------------------------------------ more measures from the same frames
-  const PRESS_RADIUS = 1.5;                     // in player heights
+  const PRESS_RADIUS = 1.5;                     // in player heights: close enough to press the ball
+  const AROUND_RADIUS = 3;                      // in player heights: "around the ball"
+  const QUICK_REGAIN_S = 5;                     // a ball won back this soon after losing it
+  const PRESS_MIN = 3;                          // opponents this close to the ball make a press
+  const LONG_SPELL_S = 15;
+  const STOP_MIN_S = 3;                         // shorter pauses are not counted as stoppages
+
+  const feet = p => [(p.box[0] + p.box[2]) / 2, p.box[3]];
+  const heightOf = p => Math.max(1, p.box[3] - p.box[1]);
+  const isTeam = s => s === TEAM_A || s === TEAM_B;
+
   function cumulativeLosses(states) {          // balls lost by each team up to each frame
     const out = new Array(states.length), lost = [0, 0]; let last = -1;
     for (let i = 0; i < states.length; i++) {
       const s = states[i];
-      if (s === TEAM_A || s === TEAM_B) { if (last !== -1 && s !== last) lost[last]++; last = s; }
+      if (isTeam(s)) { if (last !== -1 && s !== last) lost[last]++; last = s; }
       out[i] = [lost[0], lost[1]];
     }
     return out;
+  }
+  function nearBallCounts(sample, b, radius) { // players of each team within radius player heights of the ball
+    const c = [0, 0];
+    for (const p of sample.people) if (isTeam(p.team) && rectDistance(b[0], b[1], p.box) / heightOf(p) < radius) c[p.team]++;
+    return c;
   }
   function pressure(samples, states, pos) {     // players of each team near the ball while the other team has it
     const sum = [0, 0], cnt = [0, 0];
     samples.forEach((s, i) => {
       const st = states[i], b = pos[i];
-      if (!b || (st !== TEAM_A && st !== TEAM_B)) return;
-      const opp = 1 - st; let c = 0;
-      for (const p of s.people) if (p.team === opp) { const h = Math.max(1, p.box[3] - p.box[1]); if (rectDistance(b[0], b[1], p.box) / h < PRESS_RADIUS) c++; }
-      sum[opp] += c; cnt[opp]++;
+      if (!b || !isTeam(st)) return;
+      const opp = 1 - st;
+      sum[opp] += nearBallCounts(s, b, PRESS_RADIUS)[opp]; cnt[opp]++;
     });
     return [0, 1].map(k => cnt[k] ? sum[k] / cnt[k] : null);
   }
-  function momentum(states, times) {            // who had the ball in each block of time, from -1 (team B) to 1 (team A)
+  function blocksFor(times) {                   // time blocks for the charts: at most 48 of them
     const step = 1 / HZ, n = times.length;
-    if (!n) return {block: 5, bars: []};
+    if (!n) return {block: 5, edges: []};
     const stop = times[n - 1] + step, span = stop - times[0];
-    const block = [5, 10, 15, 30, 60, 120, 300, 600].find(b => span / b <= 48) || 600, bars = [];
-    for (let j = 0; times[0] + j * block < stop - 1e-9; j++) {
-      const b0 = times[0] + j * block, b1 = Math.min(b0 + block, stop); let a = 0, b = 0, m = 0;
-      for (let i = 0; i < n; i++) if (times[i] >= b0 - 1e-9 && times[i] < b1 - 1e-9) { m++; if (states[i] === TEAM_A) a++; else if (states[i] === TEAM_B) b++; }
+    const block = [5, 10, 15, 30, 60, 120, 300, 600].find(b => span / b <= 48) || 600, edges = [];
+    for (let j = 0; times[0] + j * block < stop - 1e-9; j++) edges.push([times[0] + j * block, Math.min(times[0] + (j + 1) * block, stop)]);
+    return {block, edges};
+  }
+  function momentum(states, times) {            // who had the ball in each block of time, from -1 (team B) to 1 (team A)
+    const {block, edges} = blocksFor(times), bars = [];
+    for (const [b0, b1] of edges) {
+      let a = 0, b = 0, m = 0;
+      for (let i = 0; i < times.length; i++) if (times[i] >= b0 - 1e-9 && times[i] < b1 - 1e-9) { m++; if (states[i] === TEAM_A) a++; else if (states[i] === TEAM_B) b++; }
       bars.push({start: b0, end: b1, team_a: m ? a / m : 0, team_b: m ? b / m : 0, value: m ? (a - b) / m : 0});
     }
     return {block, bars};
   }
-  function extraMetrics(samples, states, pos, source, summary) {
+
+  // ---- how much the players move between two frames, once the camera's own movement is taken out
+  function frameMotion(a, b) {
+    if (!a || !b || a.people.length < 4 || b.people.length < 4) return null;
+    const hs = a.people.map(heightOf).sort((x, y) => x - y), h0 = hs[hs.length >> 1], cell = 0.1 * h0;
+    // Every pair of same-team players that could be the same person votes for a camera shift;
+    // the shift most pairs agree on is the camera's.
+    const votes = new Map(), pairs = [];
+    for (const p of a.people) { const fp = feet(p), h = heightOf(p);
+      for (const q of b.people) {
+        if (p.team !== q.team || Math.abs(heightOf(q) - h) > 0.35 * h) continue;
+        const fq = feet(q), dx = fq[0] - fp[0], dy = fq[1] - fp[1];
+        if (Math.hypot(dx, dy) > 3 * h) continue;
+        const kx = Math.round(dx / cell), ky = Math.round(dy / cell);
+        pairs.push([dx, dy]);
+        for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) { const key = (kx + ox) + ',' + (ky + oy); votes.set(key, (votes.get(key) || 0) + 1); }
+      } }
+    if (pairs.length < 4) return null;
+    let bestKey = null, bestN = 0;
+    for (const [k, n] of votes) if (n > bestN) { bestN = n; bestKey = k; }
+    const [bx, by] = bestKey.split(',').map(Number);
+    let sx = 0, sy = 0, sn = 0;
+    for (const [dx, dy] of pairs) if (Math.hypot(dx - bx * cell, dy - by * cell) < 2 * cell) { sx += dx; sy += dy; sn++; }
+    const shift = [sx / sn, sy / sn];
+    // Each player's own step, matched to the nearest same-team player once the shift is removed.
+    const steps = [];
+    for (const p of a.people) { const fp = feet(p), h = heightOf(p); let best = Infinity;
+      for (const q of b.people) { if (p.team !== q.team) continue; const fq = feet(q);
+        const d = Math.hypot(fq[0] - fp[0] - shift[0], fq[1] - fp[1] - shift[1]) / h; if (d < best) best = d; }
+      if (best < 0.8) steps.push(best); }
+    if (steps.length < 4) return null;
+    return {shift, step: median(steps), matched: steps.length};
+  }
+  function playerActivity(samples) {            // per frame: how fast players move, in player heights per second, and the camera shift
+    const n = samples.length, raw = new Float64Array(n).fill(NaN), shift = new Array(n).fill(null);
+    for (let i = 1; i < n; i++) {
+      if (samples[i].share < NO_VIEW_SHARE || samples[i - 1].share < NO_VIEW_SHARE) continue;
+      const m = frameMotion(samples[i - 1], samples[i]);
+      if (m) { raw[i] = m.step * HZ; shift[i] = m.shift; }
+    }
+    const act = new Float64Array(n).fill(NaN);   // a moving median over one second steadies it
+    for (let i = 0; i < n; i++) { const w = [];
+      for (let j = Math.max(0, i - 2); j <= Math.min(n - 1, i + 2); j++) if (!isNaN(raw[j])) w.push(raw[j]);
+      if (w.length >= 2) act[i] = median(w); }
+    return {act, shift};
+  }
+  function ballStillness(pos, samples, shift) { // how far the ball travelled over the last second, camera movement taken out, in player heights
+    const n = pos.length, out = new Float64Array(n).fill(NaN);
+    for (let i = HZ; i < n; i++) {
+      const a = pos[i - HZ], b = pos[i]; if (!a || !b) continue;
+      let cx = 0, cy = 0, ok = true;
+      for (let j = i - HZ + 1; j <= i; j++) { if (!shift[j]) { ok = false; break; } cx += shift[j][0]; cy += shift[j][1]; }
+      if (!ok) continue;
+      const hs = samples[i].people.map(heightOf); if (!hs.length) continue;
+      out[i] = Math.hypot(b[0] - a[0] - cx, b[1] - a[1] - cy) / median(hs);
+    }
+    return out;
+  }
+  // ---- when the ball is out of play. Players walk about as fast in a stoppage as in slow build-up play, so the ball
+  // and the camera decide: a close-up or replay, a ball that sits still (a set piece), or a ball that has gone from view.
+  function runsOf(flags) { const out = []; let s = -1;
+    for (let i = 0; i <= flags.length; i++) { const on = i < flags.length && flags[i];
+      if (on && s < 0) s = i; else if (!on && s >= 0) { out.push([s, i]); s = -1; } }
+    return out; }
+  function stoppages(samples, states, pos, source, act, still) {
+    const n = samples.length, vote = new Uint8Array(n);
+    const mark = (flags, minFrames) => { for (const [s, e] of runsOf(flags)) if (e - s >= minFrames) for (let i = s; i < e; i++) vote[i] = 1; };
+    const view = samples.map(s => s.share >= NO_VIEW_SHARE);
+    mark(view.map(v => !v), HZ);                                                     // close-ups, crowd, replays from other angles
+    mark(view.map((v, i) => v && !isNaN(still[i]) && still[i] < 0.6), 2 * HZ);       // the ball sits still: a set piece is being taken
+    mark(view.map((v, i) => v && source[i] === 0), 4 * HZ);                          // the ball has been out of sight for a while
+    mark(view.map((v, i) => v && source[i] === 0 && !isNaN(act[i]) && act[i] < 0.4), Math.round(2.5 * HZ)); // out of sight, players standing
+    for (const [s, e] of runsOf(Array.from(vote, v => !v))) if (s > 0 && e < n && e - s < HZ) for (let i = s; i < e; i++) vote[i] = 1;
+    const stopped = new Uint8Array(n), segments = [];
+    for (const [s, e] of runsOf(vote)) if (e - s >= STOP_MIN_S * HZ) {
+      for (let i = s; i < e; i++) stopped[i] = 1;
+      segments.push({start: samples[s].t, end: samples[e - 1].t + 1 / HZ, seconds: (e - s) / HZ});
+    }
+    return {stopped, segments};
+  }
+  function inPlayStates(states, stopped) { return states.map((s, i) => stopped[i] ? NONE : s); }
+
+  function aroundBall(samples, pos, stopped) { // players of each team around the ball, frame by frame (null when it cannot be told)
+    return samples.map((s, i) => !pos[i] || stopped[i] || s.share < NO_VIEW_SHARE ? null : nearBallCounts(s, pos[i], AROUND_RADIUS));
+  }
+  function superiority(around, states, times) {
+    let n = 0; const more = [0, 0], sum = [0, 0], withBall = [[0, 0], [0, 0]], without = [[0, 0], [0, 0]];
+    around.forEach((c, i) => { if (!c) return; n++; sum[0] += c[0]; sum[1] += c[1];
+      if (c[0] !== c[1]) { const k = c[0] > c[1] ? 0 : 1; more[k]++;
+        if (isTeam(states[i])) (states[i] === k ? withBall : without)[k][0]++; }
+      for (const k of [0, 1]) if (isTeam(states[i])) (states[i] === k ? withBall : without)[k][1]++; });
+    const {block, edges} = blocksFor(times), bars = edges.map(([b0, b1]) => {
+      let m = 0, a = 0, b = 0;
+      for (let i = 0; i < times.length; i++) if (around[i] && times[i] >= b0 - 1e-9 && times[i] < b1 - 1e-9) { m++; if (around[i][0] > around[i][1]) a++; else if (around[i][1] > around[i][0]) b++; }
+      return {start: b0, end: b1, team_a: m ? a / m : null, team_b: m ? b / m : null, value: m ? (a - b) / m : 0};
+    });
+    return {share_more: more.map(v => n ? v / n : null), average_around: sum.map(v => n ? v / n : null),
+      with_ball: withBall.map(([x, y]) => y ? x / y : null), without_ball: without.map(([x, y]) => y ? x / y : null),
+      frames: n, radius_player_heights: AROUND_RADIUS, block, bars};
+  }
+  function teamRuns(states, times) {             // spells of each team, with nobody's frames left out
+    const runs = []; let cur = null;
+    states.forEach((s, i) => {
+      if (!isTeam(s)) return;
+      if (cur && cur.team === s) { cur.end = times[i] + 1 / HZ; cur.last = i; }
+      else { cur = {team: s, start: times[i], end: times[i] + 1 / HZ, first: i, last: i}; runs.push(cur); }
+    });
+    return runs;
+  }
+  function quickRegains(states, times, stopped) { // balls won back within a few seconds of being lost, with no stoppage in between
+    const runs = teamRuns(states, times), out = [];
+    for (let r = 2; r < runs.length; r++) {
+      const lost = runs[r - 2], other = runs[r - 1], back = runs[r];
+      if (lost.team !== back.team || other.team === back.team) continue;
+      let pause = false; for (let i = lost.last; i <= back.first; i++) if (stopped[i]) { pause = true; break; }
+      const gap = back.start - lost.end;
+      if (!pause && gap <= QUICK_REGAIN_S) out.push({team: back.team, lost_at: lost.end, regained_at: back.start, seconds: gap});
+    }
+    return out;
+  }
+  function presses(samples, states, pos, stopped) { // spells of three or more opponents right around the ball
+    const n = samples.length, out = []; let cur = null;
+    for (let i = 0; i <= n; i++) {
+      let hit = null;
+      if (i < n && pos[i] && isTeam(states[i]) && !stopped[i]) {
+        const opp = 1 - states[i], c = nearBallCounts(samples[i], pos[i], PRESS_RADIUS)[opp];
+        if (c >= PRESS_MIN) hit = {team: opp, count: c};
+      }
+      if (hit && cur && cur.team === hit.team && i - cur.last <= 2) { cur.last = i; cur.max = Math.max(cur.max, hit.count); continue; }
+      if (cur && cur.last - cur.first + 1 >= 2) out.push(cur);
+      cur = hit ? {team: hit.team, first: i, last: i, max: hit.count} : null;
+    }
+    const runs = teamRuns(states, samples.map(s => s.t));
+    return out.map(p => {
+      const start = samples[p.first].t, end = samples[p.last].t + 1 / HZ;
+      const won = runs.find(r => r.team === p.team && r.start >= start && r.start <= end + 2);
+      return {team: p.team, start, end, players: p.max, won: !!won, won_at: won ? won.start : null};
+    });
+  }
+  function moments(spellsList, regains, pressList, stops, states, times) { // the moments worth a look, in order
+    const out = [], runs = teamRuns(states, times);
+    for (let r = 1; r < runs.length; r++) if (runs[r].team !== runs[r - 1].team)
+      out.push({kind: 'loss', t: runs[r].start, team: runs[r - 1].team, to: runs[r].team});
+    for (const q of regains) out.push({kind: 'regain', t: q.regained_at, team: q.team, seconds: q.seconds, lost_at: q.lost_at});
+    for (const p of pressList) out.push({kind: 'press', t: p.start, team: p.team, players: p.players, won: p.won, end: p.end});
+    const teamSpells = spellsList.filter(s => s.state !== 'none');
+    const longest = [0, 1].map(k => teamSpells.filter(s => s.state === STATE_NAMES[k]).reduce((m, s) => !m || s.seconds > m.seconds ? s : m, null));
+    for (const s of teamSpells) {
+      const k = s.state === 'team_a' ? 0 : 1;
+      if (s.seconds >= LONG_SPELL_S || s === longest[k]) out.push({kind: 'spell', t: s.start, team: k, seconds: s.seconds, end: s.end, longest: s === longest[k]});
+    }
+    for (const s of stops) out.push({kind: 'stop', t: s.start, team: -1, seconds: s.seconds, end: s.end});
+    return out.sort((a, b) => a.t - b.t || a.kind.localeCompare(b.kind));
+  }
+
+  function extraMetrics(samples, states, pos, source, summary, extra) {
     const cum = cumulativeLosses(states), last = cum.length ? cum[cum.length - 1] : [0, 0];
+    const times = samples.map(s => s.t), q = extra.regains;
     return {
       ball_losses: last, possession_changes: last[0] + last[1],
+      quick_regains: [0, 1].map(k => q.filter(r => r.team === k).length), quick_regain_seconds: QUICK_REGAIN_S,
+      quick_regain_share: [0, 1].map(k => last[k] ? q.filter(r => r.team === k).length / last[k] : null),
       pressure_on_ball: pressure(samples, states, pos), pressure_radius_player_heights: PRESS_RADIUS,
+      presses: [0, 1].map(k => extra.presses.filter(p => p.team === k).length),
+      presses_won: [0, 1].map(k => extra.presses.filter(p => p.team === k && p.won).length),
+      superiority: extra.superiority,
       average_spell_seconds: summary.teams.map(tm => tm.spells ? tm.seconds_on_ball / tm.spells : 0),
       ball_missing_seconds: source.filter(v => v === 0).length / HZ,
-      momentum: momentum(states, samples.map(s => s.t)),
+      in_play_seconds: (samples.length - extra.stopped.reduce((a, v) => a + v, 0)) / HZ,
+      stoppages: extra.stops.length, stoppage_seconds: extra.stops.reduce((a, s) => a + s.seconds, 0),
+      longest_stoppage_seconds: extra.stops.reduce((a, s) => Math.max(a, s.seconds), 0),
+      momentum: momentum(states, times),
+      moments: extra.moments,
     };
+  }
+  function analyseMore(samples, rawStates, pos, source) { // everything after possession: play and stoppages, then the measures that use them
+    const {act, shift} = playerActivity(samples);
+    const still = ballStillness(pos, samples, shift);
+    const {stopped, segments} = stoppages(samples, rawStates, pos, source, act, still);
+    const states = inPlayStates(rawStates, stopped), times = samples.map(s => s.t);
+    const around = aroundBall(samples, pos, stopped);
+    const regains = quickRegains(states, times, stopped);
+    const pressList = presses(samples, states, pos, stopped);
+    return {act, shift, still, stopped, stops: segments, states, around, regains, presses: pressList,
+      superiority: superiority(around, states, times)};
+  }
+
+  // ------------------------------------------------------------------ the pitch from above
+  const HEAT_X = 21, HEAT_Y = 17;               // 5 m by 4 m cells
+  const onPitch = q => q && q[0] > -1 && q[0] < PL + 1 && q[1] > -1 && q[1] < PW + 1;
+  const meanOf = a => a.reduce((x, y) => x + y, 0) / a.length;
+  function mapPitch(samples) {                  // people and ball of every mapped sample, in pitch metres
+    let mapped = 0;
+    for (const s of samples) {
+      const c = s.cam;
+      s.pp = c ? s.people.map(p => pitchOf(c, [(p.box[0] + p.box[2]) / 2, p.box[3]], c.s, c.w, c.h)) : null;
+      s.bp = c && s.ball ? pitchOf(c, s.ball, c.s, c.w, c.h) : null;
+      if (c) mapped++;
+    }
+    return mapped;
+  }
+  function viewOf(cam) {                        // the part of the pitch the camera shows, as a polygon in metres
+    const {w, h} = cam, pts = [];
+    // walk the picture's edge; stop where the edge goes above the horizon
+    const edge = []; for (let k = 0; k <= 8; k++) edge.push([w * k / 8, h]);
+    for (let k = 1; k <= 8; k++) edge.push([w, h - h * k / 8]);
+    for (let k = 1; k <= 8; k++) edge.push([w - w * k / 8, 0]);
+    for (let k = 1; k < 8; k++) edge.push([0, h * k / 8]);
+    for (const [u, v] of edge) { const g = groundOf(cam.C, cam.z, u, v, w, h);
+      if (g && Math.hypot(g[0] - cam.C[0], g[1] - cam.C[1]) < 400) pts.push(g); }
+    return pts;
+  }
+  // Which way each team plays: a team stands, on average, nearer the goal it defends.
+  // Returns +1 where team A attacks towards x = 105 and -1 where it attacks towards x = 0, per sample; 0 if unknown.
+  function playDirection(samples, states, flip) {
+    // Three signs, minute by minute: a goalkeeper on the ball near a goal defends it; near a goal, the team whose
+    // rearmost player stands closest to it defends it (attackers stay level with the last defender);
+    // and overall, a team stands nearer the goal it defends.
+    const bins = new Map();
+    samples.forEach((s, i) => { if (!s.pp) return; const b = Math.floor(s.t / 60);
+      let e = bins.get(b); if (!e) bins.set(b, e = {sum: [0, 0], n: [0, 0], vote: 0, votes: 0, keeper: 0});
+      const k = states[i];
+      if (onPitch(s.bp) && (k === TEAM_A || k === TEAM_B) && (s.bp[0] < 25 || s.bp[0] > PL - 25)) {
+        let best = null; s.people.forEach((p, j) => { const q = s.pp[j]; if (!onPitch(q)) return; const d = Math.hypot(q[0] - s.bp[0], q[1] - s.bp[1]); if (d <= TOUCH_M && (!best || d < best.d)) best = {d, team: p.team}; });
+        if (best && best.team !== TEAM_A && best.team !== TEAM_B) e.keeper += (s.bp[0] < 25) === (k === TEAM_A) ? 1 : -1;
+      }
+      const xs = [[], []];
+      s.people.forEach((p, j) => { const q = s.pp[j]; if (onPitch(q) && (p.team === TEAM_A || p.team === TEAM_B)) { xs[p.team].push(q[0]); e.sum[p.team] += q[0]; e.n[p.team]++; } });
+      if (xs[0].length >= 4 && xs[1].length >= 4) {
+        const m = meanOf(xs[0].concat(xs[1]));
+        if (m > 62) { e.vote += Math.max(...xs[1]) > Math.max(...xs[0]) ? 1 : -1; e.votes++; }
+        else if (m < 43) { e.vote += Math.min(...xs[0]) < Math.min(...xs[1]) ? 1 : -1; e.votes++; }
+      } });
+    const keys = [...bins.keys()].sort((a, b) => a - b);
+    const sign = keys.map(k => { const e = bins.get(k);
+      const keeper = Math.abs(e.keeper) >= 3 ? Math.sign(e.keeper) : 0;
+      const line = Math.abs(e.vote) >= 3 && Math.abs(e.vote) >= 0.3 * e.votes ? Math.sign(e.vote) : 0;
+      const spread = e.n[0] >= 20 && e.n[1] >= 20 ? Math.sign(e.sum[1] / e.n[1] - e.sum[0] / e.n[0]) : 0;
+      return Math.sign(2 * keeper + line + spread); });
+    const total = sign.reduce((a, b) => a + b, 0);
+    let best = {score: Math.abs(total), s1: Math.sign(total) || 0, at: Infinity};
+    if (keys.length >= 20) for (let m = 5; m <= keys.length - 5; m++) {   // half time: one switch at most
+      const a = sign.slice(0, m).reduce((x, y) => x + y, 0), b = sign.slice(m).reduce((x, y) => x + y, 0);
+      if (Math.sign(a) && Math.sign(a) === -Math.sign(b) && Math.abs(a) + Math.abs(b) >= best.score + 4)
+        best = {score: Math.abs(a) + Math.abs(b), s1: Math.sign(a), at: keys[m] * 60};
+    }
+    const s1 = best.s1 * (flip ? -1 : 1);
+    return {dirA: samples.map(s => s.t < best.at ? s1 : -s1), switchAt: Number.isFinite(best.at) ? best.at : null, known: best.s1 !== 0};
+  }
+  const fromOwnGoal = (q, d) => d > 0 ? q[0] : PL - q[0];
+  // Where the ball was while each team had it: own, middle and final third.
+  function thirds(samples, states, dirA) {
+    const out = [[0, 0, 0], [0, 0, 0]], zone = new Array(samples.length).fill(null);
+    samples.forEach((s, i) => {
+      if (!onPitch(s.bp) || !dirA[i]) return;
+      const xa = fromOwnGoal(s.bp, dirA[i]);          // metres from team A's goal
+      zone[i] = xa < PL / 3 ? 'a' : xa < 2 * PL / 3 ? 'm' : 'b';   // 'a': near A's goal
+      const k = states[i]; if (k !== TEAM_A && k !== TEAM_B) return;
+      const x = k === TEAM_A ? xa : PL - xa; out[k][x < PL / 3 ? 0 : x < 2 * PL / 3 ? 1 : 2]++;
+    });
+    return {counts: out, zone};
+  }
+  function viewSpanAt(poly, y) {                // where the camera's view crosses a line across the pitch
+    let a = Infinity, b = -Infinity;
+    for (let j = 0; j < poly.length; j++) { const p = poly[j], q = poly[(j + 1) % poly.length];
+      if ((p[1] - y) * (q[1] - y) > 0 || p[1] === q[1]) continue;
+      const x = p[0] + (q[0] - p[0]) * (y - p[1]) / (q[1] - p[1]); a = Math.min(a, x); b = Math.max(b, x); }
+    return a <= b ? [a, b] : null;
+  }
+  // Each team's shape whenever at least 7 of its players are in the picture, and only what the picture can show:
+  // the width when it takes in both touchlines, the back line when it reaches 8 m behind it, the length when it also reaches beyond the front.
+  function shapes(samples, dirA) {
+    return samples.map((s, i) => {
+      if (!s.pp || !dirA[i]) return null;
+      const poly = viewOf(s.cam); if (poly.length < 3) return null;
+      const ys = poly.map(q => q[1]), fullWidth = Math.min(...ys) <= 3 && Math.max(...ys) >= PW - 3, span = viewSpanAt(poly, PW / 2);
+      const res = [null, null];
+      for (const k of [TEAM_A, TEAM_B]) {
+        const pts = []; s.people.forEach((p, j) => { if (p.team === k && onPitch(s.pp[j])) pts.push(s.pp[j]); });
+        if (pts.length < 7) continue;
+        const d = k === TEAM_A ? dirA[i] : -dirA[i];
+        const xs = pts.map(q => fromOwnGoal(q, d)).sort((a, b) => a - b), ys = pts.map(q => q[1]).sort((a, b) => a - b);
+        const cx = meanOf(xs), cy = meanOf(ys);
+        let line = xs[0]; if (xs[0] < 6 && xs[1] - xs[0] > 8) line = xs[1];   // a lone figure in the six-yard box is the goalkeeper
+        const seen = span ? [fromOwnGoal([span[0], 0], d), fromOwnGoal([span[1], 0], d)].sort((a, b) => a - b) : null;
+        const lineOk = !!seen && (line - seen[0] >= 8 || seen[0] <= 1), front = xs[xs.length - 1];
+        const lengthOk = lineOk && (seen[1] - front >= 5 || seen[1] >= PL - 1);
+        res[k] = {n: pts.length, length: lengthOk ? front - line : null, width: fullWidth ? ys[ys.length - 1] - ys[0] : null,
+          spread: meanOf(pts.map(q => Math.hypot(fromOwnGoal(q, d) - cx, q[1] - cy))), height: cx, line: lineOk ? line : null};
+      }
+      return res;
+    });
+  }
+  function shapeSummary(sh, states) {           // medians with and without the ball
+    const pick = (k, key, withBall) => { const v = [];
+      sh.forEach((r, i) => { if (r && r[k] && r[k][key] != null && states[i] === (withBall ? k : 1 - k)) v.push(r[k][key]); });
+      return v.length >= 5 ? median(v) : null; };
+    return [TEAM_A, TEAM_B].map(k => {
+      const o = {}; for (const key of ['length', 'width', 'spread', 'height', 'line']) o[key] = [pick(k, key, true), pick(k, key, false)];
+      o.samples = sh.filter(r => r && r[k]).length; return o;
+    });
+  }
+  // Where each team had the ball, on a 5 m × 4 m grid, always drawn as if the team attacks to the right.
+  function heat(samples, states, dirA) {
+    const grid = [new Float64Array(HEAT_X * HEAT_Y), new Float64Array(HEAT_X * HEAT_Y)];
+    samples.forEach((s, i) => {
+      const k = states[i]; if (!onPitch(s.bp) || !dirA[i] || (k !== TEAM_A && k !== TEAM_B)) return;
+      const d = k === TEAM_A ? dirA[i] : -dirA[i], x = d > 0 ? s.bp[0] : PL - s.bp[0], y = d > 0 ? s.bp[1] : PW - s.bp[1];
+      const gx = Math.min(HEAT_X - 1, Math.max(0, Math.floor(x / PL * HEAT_X))), gy = Math.min(HEAT_Y - 1, Math.max(0, Math.floor(y / PW * HEAT_Y)));
+      grid[k][gy * HEAT_X + gx]++;
+    });
+    return grid;
+  }
+  function pitchAnalysis(samples, states, flip, spells) {
+    const mapped = samples.filter(s => s.cam).length;
+    if (mapped < Math.max(10, 0.15 * samples.length)) return {ok: false, mapped};
+    const dir = playDirection(samples, states, flip);
+    if (!dir.known) return {ok: false, mapped};
+    const th = thirds(samples, states, dir.dirA), sh = shapes(samples, dir.dirA);
+    const fin = th.counts.map(c => c[2]);
+    return {ok: true, mapped, mappedShare: mapped / samples.length, dir, thirds: th.counts, zone: th.zone,
+      tilt: fin[0] + fin[1] ? [fin[0] / (fin[0] + fin[1]), fin[1] / (fin[0] + fin[1])] : null,
+      shapes: sh, shape: shapeSummary(sh, states), heat: heat(samples, states, dir.dirA),
+      ...(() => { const passes = findPasses(samples, states, dir.dirA); return {passes, passStats: passSummary(passes, spells || [])}; })()};
+  }
+  function sequenceMoments(A) {                 // passing moves of four passes or more, for the moments list
+    if (!A || !A.ok) return [];
+    return A.passStats.sequences.filter(q => q.passes >= 4).map(q => ({kind: 'seq', t: q.start, end: q.end, team: q.team, passes: q.passes, seconds: q.end - q.start}));
+  }
+  // ---- passes: the ball going from one player to another, read from where the ball and the players stand
+  const TOUCH_M = 2.5, PASS_MIN_M = 7, PASS_GAP_S = 4;
+  function touches(samples, states) {           // samples with a player on the ball (within 2.5 m)
+    const out = [];
+    samples.forEach((s, i) => {
+      if (!s.pp || !onPitch(s.bp)) return;
+      let best = null;
+      s.people.forEach((p, j) => { const q = s.pp[j]; if (!onPitch(q)) return;
+        const d = Math.hypot(q[0] - s.bp[0], q[1] - s.bp[1]); if (d <= TOUCH_M && (!best || d < best.d)) best = {d, j, q, team: p.team}; });
+      if (!best) return;
+      let team = best.team;                      // a goalkeeper (not in a team kit) plays for the side that has the ball
+      if (team !== TEAM_A && team !== TEAM_B) { if (states[i] === TEAM_A || states[i] === TEAM_B) team = states[i]; else return; }
+      out.push({i, t: s.t, team, pos: best.q, ball: s.bp.slice(), j: best.j});
+    });
+    return out;
+  }
+  function findPasses(samples, states, dirA) {
+    const T = touches(samples, states), out = [];
+    for (let a = 0; a + 1 < T.length; a++) {
+      const p = T[a], q = T[a + 1], dt = q.t - p.t;
+      if (dt <= 0 || dt > PASS_GAP_S) continue;
+      const D = Math.hypot(q.ball[0] - p.ball[0], q.ball[1] - p.ball[1]);
+      if (D < PASS_MIN_M || D / dt > 40) continue;  // the same player carrying it, a duel, or a ball that cannot have travelled that fast
+      let cut = false; for (let i = p.i + 1; i < q.i; i++) if (!samples[i].cam) { cut = true; break; }
+      if (cut) continue;                          // the picture changed in between: no guessing across it
+      // someone else got it: the other side, a ball too fast for a run, or a team-mate standing nearer the spot than the passer
+      let other = q.team !== p.team || D / dt >= 11;
+      if (!other) {
+        const s = samples[p.i], dPasser = Math.hypot(p.pos[0] - q.pos[0], p.pos[1] - q.pos[1]);
+        s.people.forEach((pp, j) => { if (other || j === p.j) return; const r = s.pp[j]; if (!onPitch(r)) return;
+          const tm = pp.team === TEAM_A || pp.team === TEAM_B ? pp.team : p.team;
+          if (tm === p.team && Math.hypot(r[0] - q.pos[0], r[1] - q.pos[1]) < Math.min(dPasser, 2 + 7 * dt)) other = true; });
+      }
+      if (!other) continue;
+      const k = p.team, d = (k === TEAM_A ? dirA[p.i] : -dirA[p.i]) || 0, fx = x => d > 0 ? x : PL - x;
+      out.push({i: p.i, t: p.t, t2: q.t, team: k, from: p.ball, to: q.ball, ok: q.team === k, length: D,
+        forward: d ? fx(q.ball[0]) - fx(p.ball[0]) : null, side: Math.abs(q.ball[1] - p.ball[1]),
+        intoFinal: d ? fx(p.ball[0]) < 2 * PL / 3 && fx(q.ball[0]) >= 2 * PL / 3 : false});
+    }
+    return out;
+  }
+  function passSummary(passes, spells) {
+    const teams = [TEAM_A, TEAM_B].map(k => {
+      const mine = passes.filter(p => p.team === k), done = mine.filter(p => p.ok);
+      return {attempted: mine.length, completed: done.length, accuracy: mine.length >= 3 ? done.length / mine.length : null,
+        forward: done.filter(p => p.forward != null && p.forward >= 5).length, progressive: done.filter(p => p.forward != null && p.forward >= 10).length,
+        long: mine.filter(p => p.length >= 30).length, switches: done.filter(p => p.side >= 25).length, into_final_third: done.filter(p => p.intoFinal).length};
+    });
+    // passing sequences: completed passes inside one spell of possession
+    const seqs = spells.filter(sp => sp.state === 'team_a' || sp.state === 'team_b').map(sp => {
+      const k = sp.state === 'team_a' ? TEAM_A : TEAM_B;
+      const n = passes.filter(p => p.ok && p.team === k && p.t >= sp.start - 0.01 && p.t2 <= sp.end + 0.21).length;
+      return {team: k, start: sp.start, end: sp.end, passes: n};
+    });
+    teams.forEach((o, k) => { const mine = seqs.filter(q => q.team === k);
+      o.sequences_3_plus = mine.filter(q => q.passes >= 3).length;
+      o.longest_sequence = mine.reduce((m, q) => Math.max(m, q.passes), 0);
+      o.passes_per_possession = mine.length ? mine.reduce((m, q) => m + q.passes, 0) / mine.length : null; });
+    return {teams, sequences: seqs};
+  }
+  // ---- shots and expected goals
+  // A logistic model on the shot's distance and the angle the goal mouth makes from it, fitted on 12,313 shots
+  // (not penalties) from StatsBomb open data; penalties use the share scored there (341 penalties).
+  const XG_B = [-1.5018, 1.0304, -0.0910], XG_PEN = 0.73;
+  function goalAngle(dx, dy) { const a = Math.atan2(7.32 * dx, dx * dx + dy * dy - 3.66 * 3.66); return a < 0 ? a + Math.PI : a; }
+  function xgFor(toLine, across, penalty) {     // metres to the goal line attacked, and across the pitch (0..68)
+    if (penalty) return XG_PEN;
+    const dx = Math.max(0.3, toLine), dy = Math.abs(across - PW / 2);
+    return 1 / (1 + Math.exp(-(XG_B[0] + XG_B[1] * goalAngle(dx, dy) + XG_B[2] * Math.hypot(dx, dy))));
+  }
+  // toLine: metres to the goal line being attacked; lateral: across the pitch as the attacker sees it (0..68)
+  function shotOf(i, t, team, toLine, lateral, why) {
+    return {i, t, team, toLine, lateral, distance: Math.hypot(toLine, lateral - PW / 2), xg: xgFor(toLine, lateral, false), why,
+      status: why === 'manual' ? 'ok' : 'auto', goal: false, pen: false};
+  }
+  // Shots the page suggests: a player on the ball within 32 m of the goal he attacks, then the ball fast towards
+  // the goal mouth; or, close in, the picture cutting away straight after (a replay often follows a shot).
+  function findShots(samples, states, dirA) {
+    const T = touches(samples, states), out = [];
+    for (let a = 0; a < T.length; a++) {
+      const p = T[a], k = p.team, d = (k === TEAM_A ? dirA[p.i] : -dirA[p.i]) || 0;
+      if (!d) continue;
+      const toLine = d > 0 ? PL - p.ball[0] : p.ball[0], off = Math.abs(p.ball[1] - PW / 2);
+      if (toLine > 32 || toLine < 0 || off > 22 || goalAngle(Math.max(0.3, toLine), off) < 0.12) continue;
+      const q = T[a + 1];                       // a team-mate on the ball soon after, away from the goal mouth: a pass, not a shot
+      if (q && q.team === k && q.t - p.t <= 1.6 && (d > 0 ? PL - q.ball[0] : q.ball[0]) > 6) continue;
+      let why = null;
+      for (let i = p.i + 1; i < samples.length && samples[i].t - p.t <= 1.2; i++) {
+        const s = samples[i];
+        if (!s.cam) { if (toLine <= 20 && off <= 15) why = 'cut'; break; }
+        if (!onPitch(s.bp)) continue;
+        const dt = s.t - p.t, gain = toLine - (d > 0 ? PL - s.bp[0] : s.bp[0]), v = Math.hypot(s.bp[0] - p.ball[0], s.bp[1] - p.ball[1]) / dt;
+        if (gain >= 3 && v >= 12 && v <= 45 && Math.abs(p.ball[1] + (s.bp[1] - p.ball[1]) * toLine / gain - PW / 2) <= 12) why = 'flight';
+        break;                                  // the first sighting after the touch decides
+      }
+      if (!why) continue;
+      const last = out[out.length - 1];
+      if (last && last.team === k && p.t - last.t < 3) continue;
+      out.push(shotOf(p.i, p.t, k, toLine, d > 0 ? p.ball[1] : PW - p.ball[1], why));
+    }
+    return out;
   }
 
   // ------------------------------------------------------------------ report
@@ -827,12 +1736,41 @@ footer a { color: inherit; }
       mAvg: 'متوسط فترة الاستحواذ', mLong: 'أطول فترة استحواذ',
       mNone: 'وقت بلا استحواذ', mNoneHint: 'اللعب متوقف، أو لا أحد قريب من الكرة.',
       mMissing: 'الكرة خارج الكادر', mMissingHint: 'لم تظهر الكرة في الصورة في {0} من الوقت.',
+      pitchTitle: 'الملعب من فوق',
+      pitchNote: 'نقرأ خطوط الملعب في الصورة فنعرف أين يقف كل لاعب في الكادر بالأمتار. يتحرك الرسم مع الفيديو، ويظهر فيه ما تلتقطه الكاميرا وحده (المساحة الأفتح).',
+      pitchOff: 'لم نستطع رسم الملعب لهذا الفيديو. يلزم لذلك لقطات واسعة من الكاميرا الرئيسية تظهر فيها خطوط الملعب.',
+      pitchNoView: 'الكاميرا لا تُظهر الملعب الآن', chip_pitchLive: 'مع الفيديو', chip_heat: 'أين امتلك {0} الكرة',
+      heatNote: 'كل مربع 5 أمتار في 4، ويشتد لونه كلما طال بقاء الكرة فيه مع {0}. رُسم الفريق مهاجمًا نحو اليمين.',
+      flipDir: 'اقلب اتجاه اللعب', sideRight: 'اليمين', sideLeft: 'اليسار',
+      dirText: 'يهاجم {0} نحو {1}، و{2} نحو {3}.', dirSwitch: 'وتبادل الفريقان الجهتين عند {0}.',
+      pitchMapped: 'أمكن رسم {0} من اللقطات على الملعب.', lineOf: 'خط دفاع {0}', metres: '{0} م', rowZone: 'منطقة الكرة',
+      legendZone: 'منطقة الكرة: بلون الفريق حين تكون في ثلث خصمه الأخير',
+      mFinal: 'الاستحواذ في الثلث الأخير', mFinalHint: 'نسبة ما قضاه كل فريق من وقت امتلاكه الكرة قرب مرمى خصمه.',
+      mTilt: 'السيطرة على مناطق الخطر', mTiltHint: 'من كل وقت قضته الكرة مع فريقٍ في ثلث خصمه الأخير، كم كان لكل فريق.',
+      mWidth: 'عرض الفريق: مع الكرة / دونها', mWidthHint: 'بين أبعد لاعبَين على الجانبين، حين يظهر 7 من لاعبيه على الأقل.',
+      shotsTitle: 'التسديدات والأهداف المتوقعة (xG)',
+      shotsNote: 'الأهداف المتوقعة تقدير لفرصة أن تصير التسديدة هدفًا، من بُعدها عن المرمى وزاويتها، بنموذج دُرِّب على أكثر من 12 ألف تسديدة من بيانات StatsBomb المفتوحة. التسديدات التي تقترحها الصفحة تحتاج إلى مراجعتك: ثبّت الصحيح، واحذف الخطأ، وأضف ما فاتها.',
+      noShotsWord: 'بلا تسديدات', noGoalsWord: 'بلا أهداف', xgShort: 'الأهداف المتوقعة',
+      shotAdd: 'أضف تسديدة عند هذه اللحظة', shotClick: 'انقر على الملعب حيث سُدِّدت الكرة.', shotAdded: 'أُضيفت تسديدة عند {0}.',
+      noShots: 'لم تجد الصفحة تسديدات في هذا الجزء. أضف ما تراه منها.', shotFrom: 'من {0}',
+      tag_auto: 'اقترحتها الصفحة', tag_ok: 'مؤكَّدة', tag_no: 'محذوفة', tag_manual: 'أضفتها',
+      shotOk: 'تأكيد', shotRemove: 'حذف', shotRestore: 'إرجاع', shotGoal: 'هدف', shotPen: 'ركلة جزاء',
+      chip_shots: 'التسديدات', shotMapNote: 'كل دائرة تسديدة، تكبر بقدر أهدافها المتوقعة، والمحاطة بحلقة سُجِّل منها هدف. رُسم {0} مهاجمًا نحو اليمين و{1} نحو اليسار. لإضافة تسديدة اضغط الزر في بطاقة التسديدات.',
+      xgRace: 'الأهداف المتوقعة تتراكم مع الوقت',
+      chip_passes: 'تمريرات {0}', passNote: 'كل سهم تمريرة: الخط المتصل تمريرة وصلت إلى زميل، والمتقطع كرة ذهبت إلى المنافس. رُسم الفريق مهاجمًا نحو اليمين.',
+      mPasses: 'التمريرات المكتملة', mPassesHint: 'من كل ما رُصد من تمريرات، ونسبة ما وصل منها إلى زميل.',
+      mProg: 'تمريرات تتقدم 10 أمتار أو أكثر', mProgHint: 'تمريرات مكتملة اقتربت بالكرة من مرمى المنافس 10 أمتار على الأقل.',
+      mSeqLong: 'أطول سلسلة تمرير', mSeqLongHint: 'أكثر عدد من التمريرات المتتالية في استحواذ واحد.',
+      mSeq3: 'سلاسل من 3 تمريرات أو أكثر', mSeq3Hint: 'عدد مرات الاستحواذ التي تبادل فيها الفريق 3 تمريرات على الأقل.',
+      chip_seq: 'سلاسل تمرير', mtSeq: '{0} يمرر {1} في هجمة واحدة',
+      mLine: 'ارتفاع خط الدفاع حين يدافع', mLineHint: 'بُعد آخر مدافع عن مرمى فريقه، وبعده طول الفريق من آخر مدافع إلى أول مهاجم.',
       spellsTitle: 'فترات الاستحواذ', spellsShow: 'عرض كل الفترات في جدول',
       thFrom: 'من', thTo: 'إلى', thHolder: 'الكرة مع', thSecs: 'ثوانٍ',
       saveTitle: 'احفظ النتيجة وشاركها', dlPng: 'صورة للنشر', dlCsv: 'البيانات لحظة بلحظة (CSV)', dlJson: 'الملخص (JSON)', again: 'حلّل فيديو آخر',
       methodTitle: 'كيف حسبنا هذه الأرقام',
-      method1: 'خمس مرات في كل ثانية يحدد نموذج كشف أماكن اللاعبين والكرة. تُقسَّم الفانلات إلى فريقين حسب لونها، وتُنسب كل لحظة إلى الفريق الأقرب لاعبه إلى الكرة، مقيسًا بأطوال اللاعبين، ثم يُنعَّم التسلسل بنموذج ماركوف مخفي كي لا تقلب لقطة واحدة الاستحواذ.',
-      limits: 'حدود: هذه الأرقام تقدير أولي لم يُقارَن بعد بسجل أحداث رسمي. المسافات تُقاس في الصورة لا على أرض الملعب، ولا يُنسب الاستحواذ للحارس أو الحكم، وقد تُحسب لحظات توقف اللعب أو جامعو الكرات خطأً لأحد الفريقين.',
+      method1: 'خمس مرات في كل ثانية يحدد نموذج كشف أماكن اللاعبين والكرة. تُقسَّم الفانلات إلى فريقين حسب لونها، وتُنسب كل لحظة إلى الفريق الأقرب لاعبه إلى الكرة، مقيسًا بأطوال اللاعبين، ثم يُنعَّم التسلسل بنموذج ماركوف مخفي كي لا تقلب لقطة واحدة الاستحواذ. ويُعدّ اللعب متوقفًا حين تظهر لقطة قريبة أو إعادة، أو تبقى الكرة ساكنة ثانيتين، أو تغيب عن الصورة أربع ثوانٍ، ولا تدخل لحظات التوقف في حساب الاستحواذ. أما الضغط والتفوق العددي فيُحسبان بعدد لاعبي كل فريق القريبين من الكرة في الصورة.',
+      method2: 'ولرسم الملعب من فوق نقرأ الخطوط البيضاء في كل لقطة ونطابقها مع ملعب قياسي (105 × 68 مترًا)، فنعرف موضع الكاميرا الرئيسية في المدرج واتجاهها وتقريبها، ثم نُسقط قدمي كل لاعب والكرة على أرض الملعب. ومن هذه المواقع نحسب مناطق الكرة وشكل الفريقين وخط الدفاع، ونرصد التمريرات حين تنتقل الكرة أكثر من 7 أمتار من لاعب إلى آخر. أما الأهداف المتوقعة فنموذج انحدار لوجستي على المسافة وزاوية المرمى، دُرِّب على 12,313 تسديدة من بيانات StatsBomb المفتوحة، وتُحسب ركلة الجزاء 0.73.',
+      limits: 'حدود: هذه الأرقام تقدير أولي لم يُقارَن بعد بسجل أحداث رسمي. لا يُنسب الاستحواذ للحارس أو الحكم، وقد يفوت كشف بعض التوقفات أو يُعدّ لعب بطيء توقفًا، وقد يُحسب جامعو الكرات لأحد الفريقين. ولا يُرسم الملعب إلا من الكاميرا الرئيسية وحين تظهر خطوطه، ولا يُحسب من اللاعبين إلا من في الكادر؛ والكرة في الهواء تبدو أبعد مما هي. ويُقرأ اتجاه اللعب من مواقع الفريقين، فإن أخطأ فاقلبه بالزر. والتمريرات والتسديدات تقدير يفوته بعضها حين تغيب الكرة عن الصورة، فراجع التسديدات قبل الاعتماد على أرقامها.',
       qFrames: 'لقطات جرى تحليلها: {0}', qBall: 'ظهرت الكرة في {0} من اللقطات، وقُدِّر موضعها في {1} أخرى',
       qView: 'لقطات لا يظهر فيها الملعب (لقطات قريبة أو جمهور): {0}', qModel: 'نموذج الكشف: {0}',
       footer: 'الطريقة والكود: <a href="https://github.com/amr7772/possession-from-tracking" target="_blank" rel="noopener">github.com/amr7772/possession-from-tracking</a> · المشروع نفسه على بيانات التتبع: <a href="https://huggingface.co/spaces/amreleraqi09/possession-from-tracking" target="_blank" rel="noopener">إعادة العرض</a> · نموذج الكشف YOLO26s من Ultralytics برخصة AGPL-3.0، ويعمل بـ ONNX Runtime Web.',
@@ -843,6 +1781,26 @@ footer a { color: inherit; }
             orange: 'البرتقالي', yellow: 'الأصفر', gold: 'الذهبي', green: 'الأخضر', lime: 'الفسفوري', cyan: 'السماوي', sky: 'اللبني',
             blue: 'الأزرق', navy: 'الكحلي', purple: 'البنفسجي', violet: 'الموف', pink: 'الوردي', brown: 'البني'},
       blocks: {5: '5 ثوانٍ', 10: '10 ثوانٍ', 15: '15 ثانية', 30: '30 ثانية', 60: 'دقيقة', 120: 'دقيقتين', 300: '5 دقائق', 600: '10 دقائق'},
+      timelineTitle: 'مجرى المباراة',
+      timelineNote: 'كل عمود يغطي {0}. فوق الخط تميل الكفة إلى {1}، وتحته إلى {2}. اضغط على أي نقطة للانتقال إليها في الفيديو.',
+      rowMomentum: 'الاستحواذ', rowSuperiority: 'التفوق العددي حول الكرة', rowPlay: 'الكرة في اللعب',
+      legendStop: 'اللعب متوقف', tipPlay: 'الكرة في اللعب {0} من هذا الوقت',
+      mRegain: 'الاسترجاع السريع', mRegainHint: 'كرات استعادها الفريق خلال 5 ثوانٍ من فقدها، من إجمالي مرات فقدانه.', nOfM: '{0} من {1}',
+      mSup: 'التفوق العددي حول الكرة', mSupHint: 'نسبة الوقت الذي كان فيه للفريق لاعبون أكثر من منافسه على بُعد 3 قامات من الكرة.',
+      mPlay: 'الوقت الفعلي للعب', mPlayHint: 'من أصل {0}، وتوقف اللعب {1}.', mPlayHint0: 'من أصل {0}، ولم يُرصد توقف للعب.',
+      momentsTitle: 'لحظات المباراة',
+      momentsNote: 'تُستخرج تلقائيًا من التحليل. اضغط على الوقت للانتقال إلى اللحظة، أو على زر التنزيل لحفظها لقطة فيديو.',
+      chip_top: 'الأبرز', chip_loss: 'فقدان الكرة', chip_regain: 'استرجاع سريع', chip_press: 'ضغط', chip_spell: 'احتفاظ طويل', chip_stop: 'توقفات',
+      noMoments: 'لا توجد لحظات من هذا النوع في الجزء المحلَّل.',
+      mtLoss: 'انتقلت الكرة من {0} إلى {1}', mtRegain: 'عادت الكرة إلى {0} بعد {1} من فقدها',
+      mtPress: 'ضغط من {0} بـ{1} لاعبين حول الكرة', mtPressWon: 'ضغط من {0} بـ{1} لاعبين انتهى باستعادة الكرة',
+      mtSpell: 'الكرة مع {0} لمدة {1}', mtLongest: 'أطول فترة للكرة مع {0}: {1}', mtStop: 'توقف اللعب {0}',
+      clip: 'نزّل هذه اللقطة',
+      summaryTitle: 'ملخص مكتوب', summaryNote: 'مكتوب آليًا من الأرقام. عدّل فيه ما تشاء قبل النشر.', copy: 'انسخ النص', copied: 'تم النسخ',
+      dlVideo: 'الفيديو بالتحليل', videoNote: 'يُسجَّل الفيديو بسرعته العادية، فأبقِ هذه الصفحة ظاهرة أمامك حتى ينتهي.',
+      videoProgress: 'جارٍ التسجيل: {0} من {1}', videoDone: 'اكتمل التسجيل، وبدأ التنزيل.', videoCancel: 'إلغاء التسجيل',
+      videoFail: 'تعذّر تسجيل الفيديو في هذا المتصفح.',
+      playStopped: 'اللعب متوقف',
     },
     en: {
       docTitle: 'Who has the ball? Possession from a match video', otherLang: 'العربية',
@@ -884,12 +1842,41 @@ footer a { color: inherit; }
       mAvg: 'Average spell', mLong: 'Longest spell',
       mNone: 'Time without possession', mNoneHint: 'Play stopped, or nobody near the ball.',
       mMissing: 'Ball out of view', mMissingHint: 'The ball was not in the picture {0} of the time.',
+      pitchTitle: 'The pitch from above',
+      pitchNote: 'The pitch markings in the picture tell us where every player in shot is standing, in metres. The drawing moves with the video and shows only what the camera sees (the lighter area).',
+      pitchOff: 'We could not map the pitch for this video. That needs wide shots from the main camera with the pitch markings in view.',
+      pitchNoView: 'The camera is not showing the pitch right now', chip_pitchLive: 'With the video', chip_heat: 'Where {0} had the ball',
+      heatNote: 'Each square is 5 by 4 metres and gets darker the longer {0} had the ball there. Drawn attacking to the right.',
+      flipDir: 'Swap the direction of play', sideRight: 'the right', sideLeft: 'the left',
+      dirText: '{0} attack towards {1}, {2} towards {3}.', dirSwitch: 'The teams changed ends at {0}.',
+      pitchMapped: '{0} of the frames could be mapped onto the pitch.', lineOf: '{0} back line', metres: '{0} m', rowZone: 'Where the ball is',
+      legendZone: 'Where the ball is: in a team\'s colour when it is in that team\'s attacking third',
+      mFinal: 'Possession in the final third', mFinalHint: 'How much of each team\'s time on the ball was spent near the other goal.',
+      mTilt: 'Field tilt', mTiltHint: 'Of all the time a team had the ball in its attacking third, each team\'s share.',
+      mWidth: 'Team width: with / without the ball', mWidthHint: 'Between the two widest players, when at least 7 of the team are in shot.',
+      shotsTitle: 'Shots and expected goals (xG)',
+      shotsNote: 'Expected goals estimate how likely a shot was to go in, from its distance and angle, with a model trained on more than 12,000 shots from StatsBomb open data. The shots this page suggests need your check: confirm the right ones, remove the wrong ones, and add any it missed.',
+      noShotsWord: 'no shots', noGoalsWord: 'no goals', xgShort: 'Expected goals',
+      shotAdd: 'Add a shot at this moment', shotClick: 'Click on the pitch where the shot was taken.', shotAdded: 'Shot added at {0}.',
+      noShots: 'The page found no shots in this stretch. Add any you see.', shotFrom: 'from {0}',
+      tag_auto: 'suggested', tag_ok: 'confirmed', tag_no: 'removed', tag_manual: 'added by you',
+      shotOk: 'Confirm', shotRemove: 'Remove', shotRestore: 'Restore', shotGoal: 'Goal', shotPen: 'Penalty',
+      chip_shots: 'Shots', shotMapNote: 'Each circle is a shot, sized by its expected goals; a ring marks a goal. {0} drawn attacking to the right, {1} to the left. To add a shot, use the button in the shots card.',
+      xgRace: 'Expected goals adding up over time',
+      chip_passes: '{0} passes', passNote: 'Each arrow is a pass: solid if it reached a team-mate, dashed if it went to the other side. Drawn attacking to the right.',
+      mPasses: 'Completed passes', mPassesHint: 'Out of all passes found, and the share that reached a team-mate.',
+      mProg: 'Passes gaining 10 m or more', mProgHint: 'Completed passes that took the ball at least 10 m closer to the other goal.',
+      mSeqLong: 'Longest passing move', mSeqLongHint: 'Most passes in a row in one spell of possession.',
+      mSeq3: 'Moves of 3 passes or more', mSeq3Hint: 'Spells of possession with at least 3 passes.',
+      chip_seq: 'Passing moves', mtSeq: '{0} string together {1}',
+      mLine: 'Height of the back line when defending', mLineHint: 'How far the last defender stands from his own goal, then the team\'s length from back to front.',
       spellsTitle: 'Spells of possession', spellsShow: 'Show every spell in a table',
       thFrom: 'From', thTo: 'To', thHolder: 'Ball with', thSecs: 'Seconds',
       saveTitle: 'Save and share', dlPng: 'Image to share', dlCsv: 'Moment-by-moment data (CSV)', dlJson: 'Summary (JSON)', again: 'Analyse another video',
       methodTitle: 'How this was measured',
-      method1: 'Five times a second, a detector finds the players and the ball. Shirts are split into two teams by colour, each moment goes to the team whose nearest player is closest to the ball, measured in player heights, and a hidden Markov model smooths the sequence so a single frame cannot flip possession.',
-      limits: 'Limits: these numbers are a first estimate, not yet checked against an official event log. Distances are measured in the picture, not on the pitch; goalkeepers and referees are never given the ball; and stoppages or ball kids can be counted for a team by mistake.',
+      method1: 'Five times a second, a detector finds the players and the ball. Shirts are split into two teams by colour, each moment goes to the team whose nearest player is closest to the ball, measured in player heights, and a hidden Markov model smooths the sequence so a single frame cannot flip possession. Play counts as stopped during close-ups and replays, when the ball sits still for two seconds, or when it is out of sight for four, and those moments are left out of possession. Pressing and numbers around the ball count each team’s players near the ball in the picture.',
+      method2: 'For the pitch from above, the white markings in each frame are matched to a standard 105 × 68 m pitch, which tells us where the main camera stands, where it points and how far it zooms; each player\'s feet and the ball are then placed on the ground. From those positions come where the ball was, both teams\' shape and back line, and passes, counted when the ball travels more than 7 m from one player to another. Expected goals come from a logistic regression on distance and goal angle, fitted on 12,313 shots from StatsBomb open data; a penalty counts 0.73.',
+      limits: 'Limits: these numbers are a first estimate, not yet checked against an official event log. Goalkeepers and referees are never given the ball; some stoppages may be missed or slow play taken for one, and ball kids can be counted for a team. The pitch is mapped only from the main camera with its markings in view, only players in shot are counted, and a ball in the air looks further away than it is. The direction of play is read from where the teams stand; if it is wrong, swap it with the button. Passes and shots are estimates that miss some when the ball is out of the picture, so check the shots before relying on their numbers.',
       qFrames: 'Frames analysed: {0}', qBall: 'Ball found in {0} of frames, and its position filled in for {1} more',
       qView: 'Frames with no pitch in view (close-ups, crowd): {0}', qModel: 'Detector: {0}',
       footer: 'Method and code: <a href="https://github.com/amr7772/possession-from-tracking" target="_blank" rel="noopener">github.com/amr7772/possession-from-tracking</a> · The same project on tracking data: <a href="https://huggingface.co/spaces/amreleraqi09/possession-from-tracking" target="_blank" rel="noopener">the replay</a> · The detector is YOLO26s by Ultralytics (AGPL-3.0), run with ONNX Runtime Web.',
@@ -900,6 +1887,26 @@ footer a { color: inherit; }
             yellow: 'Yellow', gold: 'Gold', green: 'Green', lime: 'Lime', cyan: 'Cyan', sky: 'Sky blue', blue: 'Blue', navy: 'Navy',
             purple: 'Purple', violet: 'Violet', pink: 'Pink', brown: 'Brown'},
       blocks: {5: '5-second stretch', 10: '10-second stretch', 15: '15-second stretch', 30: '30-second stretch', 60: 'minute', 120: '2-minute stretch', 300: '5-minute stretch', 600: '10-minute stretch'},
+      timelineTitle: 'How the match went',
+      timelineNote: 'Each bar covers a {0}. Above the line the balance tips towards {1}; below it, towards {2}. Click anywhere to jump there in the video.',
+      rowMomentum: 'Possession', rowSuperiority: 'More players around the ball', rowPlay: 'Ball in play',
+      legendStop: 'Play stopped', tipPlay: 'Ball in play {0} of this time',
+      mRegain: 'Quick regains', mRegainHint: 'Balls won back within 5 seconds of losing them, out of all balls lost.', nOfM: '{0} of {1}',
+      mSup: 'More players around the ball', mSupHint: 'Share of the time the team had more players than the other within 3 player heights of the ball.',
+      mPlay: 'Time in play', mPlayHint: 'Out of {0}; play stopped {1}.', mPlayHint0: 'Out of {0}; no stoppage was found.',
+      momentsTitle: 'Moments',
+      momentsNote: 'Picked out automatically. Click a time to jump there, or the download button to save it as a video clip.',
+      chip_top: 'Highlights', chip_loss: 'Balls lost', chip_regain: 'Quick regains', chip_press: 'Pressing', chip_spell: 'Long spells', chip_stop: 'Stoppages',
+      noMoments: 'Nothing of this kind in the analysed stretch.',
+      mtLoss: 'The ball goes from {0} to {1}', mtRegain: '{0} win the ball back {1} after losing it',
+      mtPress: '{0} press with {1} players around the ball', mtPressWon: '{0} press with {1} players and win the ball',
+      mtSpell: '{0} keep the ball for {1}', mtLongest: 'Longest spell, {0}: {1}', mtStop: 'Play stopped for {0}',
+      clip: 'Download this clip',
+      summaryTitle: 'Written summary', summaryNote: 'Written automatically from the numbers. Edit it as you like before publishing.', copy: 'Copy text', copied: 'Copied',
+      dlVideo: 'Video with the analysis', videoNote: 'The video records at normal speed, so keep this page in front of you until it finishes.',
+      videoProgress: 'Recording: {0} of {1}', videoDone: 'Recording finished; the download has started.', videoCancel: 'Cancel recording',
+      videoFail: 'This browser could not record the video.',
+      playStopped: 'Play stopped',
     },
   };
   let lang = 'ar';
@@ -913,9 +1920,20 @@ footer a { color: inherit; }
   }
   const iso = s => '\u2066' + s + '\u2069';          // keeps times left to right inside Arabic text
   const pct = v => Math.round(v * 100) + '%';
+  const pctIn = v => iso(pct(v));                    // a share inside a sentence keeps its % on the right in Arabic
   const dur = v => v < 60 ? t('nSec', Math.round(v)) : iso(clockOf(v));
   const dur1 = v => !v ? '–' : v < 60 ? t('nSec', (Math.round(v * 10) / 10).toString()) : iso(clockOf(v));
   const count = n => n.toLocaleString('en');
+  // counted words, with the Arabic forms for one, two, three to ten, and more
+  const arCount = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : n >= 3 && n <= 10 ? n + ' ' + few : n + ' ' + many;
+  const timesWord = n => rtl() ? arCount(n, 'مرة واحدة', 'مرتين', 'مرات', 'مرة') : n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times';
+  const secondsWord = v => { const n = Math.round(v); return rtl() ? arCount(n, 'ثانية واحدة', 'ثانيتين', 'ثوانٍ', 'ثانية') : n === 1 ? '1 second' : n + ' seconds'; };
+  function spanWords(v) {                              // a length of time in words: seconds, or minutes and seconds
+    const n = Math.round(v); if (n < 60) return secondsWord(n);
+    const m = Math.floor(n / 60), r = n % 60;
+    if (rtl()) return arCount(m, 'دقيقة واحدة', 'دقيقتين', 'دقائق', 'دقيقة') + (r ? ' و' + secondsWord(r) : '');
+    return m + ' min' + (r ? ' ' + r + ' s' : '');
+  }
 
   // ------------------------------------------------------------------ team names and colours
   const MARK = '\u2063';                               // names starting with this are made up by the page
@@ -930,6 +1948,7 @@ footer a { color: inherit; }
     }
     return name;
   }
+  const nameOf = k => '\u2068' + teamLabel(k) + '\u2069';
   function displayColour(hex) {                        // a cleaner version of a measured shirt colour
     const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
@@ -1016,7 +2035,7 @@ footer a { color: inherit; }
     $('swap').hidden = !R.customNames;
     const w = $('warn'), key = !S.warning ? null : /close in colour/.test(S.warning) ? 'warnClose' : 'warnSmall';
     w.hidden = !key; w.textContent = key ? t(key) : '';
-    renderScrub(); renderMomentum(); renderMetrics(); renderSpells(); renderQuality();
+    renderScrub(); renderTimeline(); renderMetrics(); renderPitchCard(); renderShots(); renderMoments(); renderSummary(); renderSpells(); renderQuality();
     lastI = -1; syncTo(player.currentTime || R.t0);
     playIcon();
   }
@@ -1030,16 +2049,17 @@ footer a { color: inherit; }
     let j = i; while (j > 0 && R.states[j - 1] === st) j--;
     const a = el('div'); a.append(el('div', {class: 'label'}, t('liveNow')));
     const now = el('div', {class: 'now'});
-    if (st === TEAM_A || st === TEAM_B) now.append(kitDot(st), el('span', {}, teamLabel(st)));
+    if (R.stopped[i]) now.append(el('span', {class: 'swatch stop big', 'aria-hidden': 'true'}), el('span', {class: 'muted'}, t('playStopped')));
+    else if (st === TEAM_A || st === TEAM_B) now.append(kitDot(st), el('span', {}, teamLabel(st)));
     else now.append(el('span', {class: 'muted'}, t('nobody')));
     a.append(now, el('div', {class: 'sub2'}, t('since', dur((i - j + 1) / HZ))));
     const b = el('div'); b.append(el('div', {class: 'label'}, t('soFar')));
     const ms = el('div', {class: 'mini-split'});
     for (const k of [0, 1]) { const d = paint(el('div'), k); d.style.flex = String(tot ? Math.max(held[k] / tot, 0.001) : 0.5); ms.append(d); }
-    b.append(ms, pairRow(k => teamLabel(k) + ' ' + (tot ? pct(held[k] / tot) : '–')));
-    const c = el('div'); c.append(el('div', {class: 'label'}, t('lossesSoFar')), pairRow(k => teamLabel(k) + ': ' + lost[k]));
+    b.append(ms, pairRow(k => nameOf(k) + ' ' + (tot ? pctIn(held[k] / tot) : '–')));
+    const c = el('div'); c.append(el('div', {class: 'label'}, t('lossesSoFar')), pairRow(k => nameOf(k) + ': ' + lost[k]));
     const d = el('div'), near = nearBall(i); d.append(el('div', {class: 'label'}, t('nearNow')));
-    if (near) d.append(pairRow(k => teamLabel(k) + ': ' + near[k]), el('div', {class: 'sub2'}, t('nearHint')));
+    if (near) d.append(pairRow(k => nameOf(k) + ': ' + near[k]), el('div', {class: 'sub2'}, t('nearHint')));
     else d.append(el('div', {class: 'sub2'}, t('ballHidden')));
     live.append(a, b, c, d);
   }
@@ -1060,7 +2080,7 @@ footer a { color: inherit; }
   function syncTo(time) {
     if (!R) return;
     const i = currentIndex(time);
-    if (i !== lastI) { lastI = i; renderLive(i); }
+    if (i !== lastI) { lastI = i; renderLive(i); if (pitchMode === 'live') renderPitch(i); }
     movePlayheads(time);
     $('clock').textContent = clockOf(time) + ' / ' + clockOf(R.t1);
   }
@@ -1101,42 +2121,76 @@ footer a { color: inherit; }
     box.setAttribute('aria-valuemin', R.t0.toFixed(1)); box.setAttribute('aria-valuemax', R.t1.toFixed(1));
   }
 
-  function renderMomentum() {
-    const M = R.summary.metrics.momentum, box = $('momentum'); box.replaceChildren();
-    $('momentum-note').textContent = t('momentumNote', t('blocks')[M.block] || dur(M.block), teamLabel(0), teamLabel(1));
+  function inPlayShare(a, b) {                       // share of a stretch with the ball in play
+    let n = 0, p = 0;
+    R.samples.forEach((sm, i) => { if (sm.t >= a - 1e-9 && sm.t < b - 1e-9) { n++; if (!R.stopped[i]) p++; } });
+    return n ? p / n : 1;
+  }
+  function renderTimeline() {                         // possession, numbers around the ball and ball in play, on one time axis
+    const M = R.summary.metrics, mom = M.momentum, sup = M.superiority, box = $('momentum'); box.replaceChildren();
+    $('momentum-note').textContent = t('timelineNote', t('blocks')[mom.block] || dur(mom.block), nameOf(0), nameOf(1));
     const lg = $('momentum-legend'); lg.replaceChildren();
-    for (const k of [0, 1]) { const s = el('span'); s.append(kitDot(k, true), document.createTextNode(teamLabel(k) + ': ' + t(k ? 'below' : 'above'))); lg.append(s); }
-    const W = Math.max(280, box.clientWidth), H = 184, top = 8, mid = 86, half = 70;
+    for (const k of [0, 1]) { const s = el('span'); s.append(kitDot(k, true), document.createTextNode(nameOf(k) + ': ' + t(k ? 'below' : 'above'))); lg.append(s); }
+    { const s = el('span'); s.append(el('span', {class: 'swatch stop', 'aria-hidden': 'true'}), document.createTextNode(t('legendStop'))); lg.append(s); }
+    const zoneOn = !!(R.pitch && R.pitch.ok);
+    if (zoneOn) { const s2 = el('span'); s2.append(document.createTextNode(t('legendZone'))); lg.append(s2); }
+    const W = Math.max(280, box.clientWidth), H = zoneOn ? 330 : 296, top = 26;
+    const rows = {mom: {label: 16, mid: 88, half: 58}, sup: {label: 172, mid: 210, half: 26}, play: {label: 254, y: 262, h: 10}, zone: {label: 288, y: 296, h: 10}};
+    const bottom = zoneOn ? rows.zone.y + rows.zone.h : rows.play.y + rows.play.h;
     const g = {a: R.t0, b: R.t1, x0: 4, x1: W - 4};
-    const s = sv('svg', {viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img',
-      'aria-label': t('momentum') + ': ' + M.bars.length + ' × ' + (t('blocks')[M.block] || M.block)});
+    const s = sv('svg', {viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': t('timelineTitle')});
+    for (const [y, key] of [[rows.mom.label, 'rowMomentum'], [rows.sup.label, 'rowSuperiority'], [rows.play.label, 'rowPlay']].concat(zoneOn ? [[rows.zone.label, 'rowZone']] : [])) {
+      const e = sv('text', {x: rtl() ? W - 4 : 4, y, 'text-anchor': 'start', class: 'row-label'}); e.textContent = t(key); s.append(e);
+    }
     for (const v of niceTicks(g.a, g.b, Math.max(3, Math.floor(W / 110)))) {
       const x = xFor(v, g);
-      s.append(sv('line', {x1: x, x2: x, y1: top, y2: mid + half, stroke: 'var(--line)', 'stroke-width': 1}));
+      s.append(sv('line', {x1: x, x2: x, y1: top, y2: bottom, stroke: 'var(--line)', 'stroke-width': 1}));
       const tx = sv('text', {x: Math.min(W - 18, Math.max(18, x)), y: H - 4, 'text-anchor': 'middle'}); tx.textContent = clockOf(v); s.append(tx);
     }
-    s.append(sv('line', {x1: g.x0, x2: g.x1, y1: mid, y2: mid, stroke: 'var(--line-2)', 'stroke-width': 1}));
-    const n = M.bars.length, slot = (g.x1 - g.x0) / Math.max(1, n), bw = Math.max(2, Math.min(30, slot * 0.72));
-    const tip = el('div', {class: 'tip'}); box.append(tip);
-    M.bars.forEach(bar => {
-      const cx = xFor((bar.start + bar.end) / 2, g), h = Math.abs(bar.value) * half;
-      if (h >= 0.5) {
-        const k = bar.value > 0 ? 0 : 1, end = k === 0 ? mid - h : mid + h;
-        s.append(sv('path', {d: barPath(cx - bw / 2, bw, k === 0 ? mid - 1 : mid + 1, end, 4), fill: TC.fill[k], stroke: TC.edge[k], 'stroke-width': 1}));
+    for (const r of [rows.mom, rows.sup]) s.append(sv('line', {x1: g.x0, x2: g.x1, y1: r.mid, y2: r.mid, stroke: 'var(--line-2)', 'stroke-width': 1}));
+    s.append(sv('rect', {x: g.x0, y: rows.play.y, width: g.x1 - g.x0, height: rows.play.h, rx: 3, fill: 'var(--play)'}));
+    for (const st of R.stops) {
+      const xa = xFor(st.start, g), xb = xFor(st.end, g);
+      s.append(sv('rect', {x: Math.min(xa, xb), y: rows.play.y, width: Math.max(1.5, Math.abs(xb - xa)), height: rows.play.h, fill: 'var(--stop)'}));
+    }
+    if (zoneOn) {                                  // the ball in a team's attacking third, in that team's colour
+      const Z = R.pitch.zone, dt = 1 / HZ;
+      s.append(sv('rect', {x: g.x0, y: rows.zone.y, width: g.x1 - g.x0, height: rows.zone.h, rx: 3, fill: 'var(--surface-2)'}));
+      for (let i = 0; i < Z.length;) {
+        let j = i; while (j + 1 < Z.length && Z[j + 1] === Z[i]) j++;
+        if (Z[i]) { const xa = xFor(R.samples[i].t, g), xb = xFor(R.samples[j].t + dt, g), k = Z[i] === 'b' ? 0 : Z[i] === 'a' ? 1 : -1;
+          s.append(sv('rect', {x: Math.min(xa, xb), y: rows.zone.y, width: Math.max(1.5, Math.abs(xb - xa)), height: rows.zone.h,
+            fill: k < 0 ? 'var(--line-2)' : TC.fill[k], stroke: k < 0 ? 'none' : TC.edge[k], 'stroke-width': k < 0 ? 0 : 0.75})); }
+        i = j + 1;
       }
-      const hit = sv('rect', {x: cx - slot / 2, y: top, width: slot, height: mid + half - top, fill: 'transparent', style: 'cursor:pointer'});
+    }
+    const n = mom.bars.length, slot = (g.x1 - g.x0) / Math.max(1, n), bw = Math.max(2, Math.min(30, slot * 0.72));
+    const drawBar = (cx, value, r) => {
+      const h = Math.abs(value) * r.half; if (h < 0.5) return;
+      const k = value > 0 ? 0 : 1;
+      s.append(sv('path', {d: barPath(cx - bw / 2, bw, k === 0 ? r.mid - 1 : r.mid + 1, k === 0 ? r.mid - h : r.mid + h, 4), fill: TC.fill[k], stroke: TC.edge[k], 'stroke-width': 1}));
+    };
+    const tip = el('div', {class: 'tip'}); box.append(tip);
+    const tipRows = (key, a, b) => { tip.append(el('div', {class: 'tip-h'}, t(key)));
+      for (const k of [0, 1]) { const r = el('div', {class: 't-row'}); r.append(kitDot(k, true), document.createTextNode(nameOf(k) + ' ' + pctIn(k ? b : a))); tip.append(r); } };
+    mom.bars.forEach((mb, j) => {
+      const sb = sup.bars[j], cx = xFor((mb.start + mb.end) / 2, g);
+      drawBar(cx, mb.value, rows.mom); if (sb) drawBar(cx, sb.value, rows.sup);
+      const hit = sv('rect', {x: cx - slot / 2, y: top, width: slot, height: bottom - top, fill: 'transparent', style: 'cursor:pointer'});
       hit.addEventListener('pointerenter', () => {
-        tip.replaceChildren(el('div', {class: 'sub2'}, iso(clockOf(bar.start) + '–' + clockOf(bar.end))));
-        for (const k of [0, 1]) { const r = el('div', {class: 't-row'}); r.append(kitDot(k, true), document.createTextNode(teamLabel(k) + ' ' + pct(k ? bar.team_b : bar.team_a))); tip.append(r); }
+        tip.replaceChildren(el('div', {class: 'sub2'}, iso(clockOf(mb.start) + '–' + clockOf(mb.end))));
+        tipRows('rowMomentum', mb.team_a, mb.team_b);
+        if (sb && sb.team_a != null) tipRows('rowSuperiority', sb.team_a, sb.team_b);
+        tip.append(el('div', {class: 'sub2'}, t('tipPlay', pctIn(inPlayShare(mb.start, mb.end)))));
         tip.style.display = 'block';
         const left = Math.min(Math.max(0, cx - tip.offsetWidth / 2), W - tip.offsetWidth);
-        tip.style.left = left + 'px'; tip.style.top = (bar.value > 0 ? mid + 8 : top) + 'px';
+        tip.style.left = left + 'px'; tip.style.top = (mb.value > 0 ? rows.mom.mid + 8 : top) + 'px';
       });
       hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
-      hit.addEventListener('click', () => seekTo(bar.start));
+      hit.addEventListener('click', e => { const rc = s.getBoundingClientRect(); seekTo(vFor((e.clientX - rc.left) * W / rc.width, g)); });
       s.append(hit);
     });
-    const ph = sv('line', {x1: 0, x2: 0, y1: top, y2: mid + half, stroke: 'var(--text)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3', 'pointer-events': 'none'});
+    const ph = sv('line', {x1: 0, x2: 0, y1: top, y2: bottom, stroke: 'var(--text)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3', 'pointer-events': 'none'});
     s.append(ph); box.prepend(s);
     g.ph = ph; momG = g;
   }
@@ -1144,6 +2198,7 @@ footer a { color: inherit; }
   function movePlayheads(time) {
     if (scrubG) { scrubG.head.setAttribute('transform', 'translate(' + xFor(time, scrubG) + ',0)'); $('scrub').setAttribute('aria-valuenow', time.toFixed(1)); $('scrub').setAttribute('aria-valuetext', clockOf(time)); }
     if (momG) { const x = xFor(time, momG); momG.ph.setAttribute('x1', x); momG.ph.setAttribute('x2', x); }
+    if (xgG && !$('shots-card').hidden && !$('xg-race').hidden) { const x = xFor(time, xgG); xgG.ph.setAttribute('x1', x); xgG.ph.setAttribute('x2', x); }
   }
 
   function renderMetrics() {
@@ -1158,12 +2213,388 @@ footer a { color: inherit; }
       box.append(c);
     };
     card(t('mLosses'), M.ball_losses.map(String), t('mLossesHint'));
+    card(t('mRegain'), [0, 1].map(k => t('nOfM', M.quick_regains[k], M.ball_losses[k])), t('mRegainHint'));
     card(t('mPress'), M.pressure_on_ball.map(v => v == null ? '–' : v.toFixed(1)), t('mPressHint'));
+    card(t('mSup'), M.superiority.share_more.map(v => v == null ? '–' : pct(v)), t('mSupHint'));
     card(t('mAvg'), M.average_spell_seconds.map(dur1));
     card(t('mLong'), S.teams.map(tm => dur1(tm.longest_spell_seconds)));
-    card(t('mNone'), dur(S.seconds_no_possession), t('mNoneHint'));
-    card(t('mMissing'), dur(M.ball_missing_seconds), t('mMissingHint', pct(M.ball_missing_seconds / Math.max(1e-9, S.duration_seconds))));
+    card(t('mPlay'), dur(M.in_play_seconds), M.stoppages ? t('mPlayHint', dur(S.duration_seconds), timesWord(M.stoppages)) : t('mPlayHint0', dur(S.duration_seconds)));
+    card(t('mMissing'), dur(M.ball_missing_seconds), t('mMissingHint', pctIn(M.ball_missing_seconds / Math.max(1e-9, S.duration_seconds))));
   }
+
+  // ------------------------------------------------------------------ the pitch from above
+  let pitchMode = 'live';
+  const subjectOf = k => rtl() && (R.teams.names[k] || '').charAt(0) !== MARK ? 'فريق ' + nameOf(k) : nameOf(k);
+  const metres = v => v == null ? '–' : t('metres', Math.round(v));
+  function pitchCanvas() {
+    const cv = $('pitch'), W = Math.max(260, Math.min(760, cv.parentElement.clientWidth || 600)), m = 14;
+    const sc = (W - 2 * m) / PL, H = Math.round(PW * sc + 2 * m), dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    cv.style.height = H + 'px';
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return {g, W, H, sc, X: x => m + x * sc, Y: y => m + (PW - y) * sc};   // the near touchline at the bottom, as the camera sees it
+  }
+  function drawPitch(P) {
+    const {g, W, H, X, Y} = P;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = cssVar('--pitch-bg', '#e7ede4'); g.beginPath(); g.roundRect ? g.roundRect(0, 0, W, H, 12) : g.rect(0, 0, W, H); g.fill();
+    g.strokeStyle = cssVar('--pitch-line', 'rgba(18,22,17,0.38)'); g.lineWidth = 1.2; g.lineCap = 'round';
+    g.beginPath();
+    for (const [x1, y1, x2, y2] of PITCH_LINES) { g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); }
+    for (const x0 of [0, PL]) { const d = x0 ? 1.6 : -1.6; g.moveTo(X(x0), Y(34 - 3.66)); g.lineTo(X(x0 + d), Y(34 - 3.66)); g.lineTo(X(x0 + d), Y(34 + 3.66)); g.lineTo(X(x0), Y(34 + 3.66)); }
+    g.stroke();
+    g.fillStyle = g.strokeStyle; for (const x of [11, PL / 2, PL - 11]) { g.beginPath(); g.arc(X(x), Y(34), 1.8, 0, 2 * Math.PI); g.fill(); }
+  }
+  function pitchLabel(P, text) {
+    const {g, W, H} = P; g.font = '600 14px ' + cssVar('--font', 'system-ui'); g.textAlign = 'center'; g.textBaseline = 'middle';
+    const w = g.measureText(text).width + 24;
+    g.fillStyle = cssVar('--surface', '#fff'); g.globalAlpha = 0.92; g.beginPath(); g.roundRect ? g.roundRect(W / 2 - w / 2, H / 2 - 16, w, 32, 10) : g.rect(W / 2 - w / 2, H / 2 - 16, w, 32); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = cssVar('--text-2', '#4c5449'); g.fillText(text, W / 2, H / 2);
+  }
+  function renderPitch(i) {
+    if (!R || !R.pitch || !R.pitch.ok) return;
+    const A = R.pitch, P = pitchCanvas(), {g, X, Y} = P;
+    drawPitch(P);
+    if (pitchMode === 'passA' || pitchMode === 'passB') { drawPasses(P, pitchMode === 'passA' ? TEAM_A : TEAM_B); return; }
+    if (pitchMode === 'shots') { drawShots(P); return; }
+    if (pitchMode !== 'live') {
+      const k = pitchMode === 'heatA' ? TEAM_A : TEAM_B, grid = A.heat[k], mx = Math.max(1, ...grid), rgb = cssVar('--heat', '29,79,145');
+      const cw = PL / HEAT_X, chh = PW / HEAT_Y;
+      for (let gy = 0; gy < HEAT_Y; gy++) for (let gx = 0; gx < HEAT_X; gx++) { const v = grid[gy * HEAT_X + gx]; if (!v) continue;
+        g.fillStyle = 'rgba(' + rgb + ',' + (0.1 + 0.75 * Math.sqrt(v / mx)).toFixed(3) + ')';
+        g.fillRect(X(gx * cw) + 0.5, Y((gy + 1) * chh) + 0.5, cw * P.sc - 1, chh * P.sc - 1); }
+      drawPitchLinesOnly(P);
+      const ay = Y(PW) - 7, ax = X(PL / 2);              // the direction of attack
+      g.strokeStyle = cssVar('--text-2', '#4c5449'); g.fillStyle = g.strokeStyle; g.lineWidth = 2; g.beginPath(); g.moveTo(ax - 26, ay); g.lineTo(ax + 22, ay); g.stroke();
+      g.beginPath(); g.moveTo(ax + 28, ay); g.lineTo(ax + 20, ay - 5); g.lineTo(ax + 20, ay + 5); g.closePath(); g.fill();
+      $('pitch').setAttribute('aria-label', t('chip_heat', nameOf(k)));
+      return;
+    }
+    const s = R.samples[i];
+    if (!s || !s.cam) { pitchLabel(P, t('pitchNoView')); $('pitch').setAttribute('aria-label', t('pitchNoView')); return; }
+    const poly = viewOf(s.cam);
+    if (poly.length > 2) {                       // what the camera sees, lighter than the rest
+      g.save(); g.beginPath(); g.rect(X(-3), Y(PW + 3), (PL + 6) * P.sc, (PW + 6) * P.sc); g.clip();
+      g.fillStyle = cssVar('--pitch-view', 'rgba(255,255,255,0.55)'); g.beginPath(); poly.forEach((q, j) => j ? g.lineTo(X(q[0]), Y(q[1])) : g.moveTo(X(q[0]), Y(q[1]))); g.closePath(); g.fill(); g.restore();
+      drawPitchLinesOnly(P);
+    }
+    const st = R.states[i], sh = A.shapes[i];
+    if ((st === TEAM_A || st === TEAM_B) && sh && sh[1 - st] && sh[1 - st].line != null) {     // the defending team's last line
+      const k = 1 - st, d = k === TEAM_A ? A.dir.dirA[i] : -A.dir.dirA[i], x = d > 0 ? sh[k].line : PL - sh[k].line;
+      g.save(); g.setLineDash([6, 5]); g.strokeStyle = TC.edge[k] === TC.fill[k] ? TC.fill[k] : TC.edge[k]; g.lineWidth = 2; g.beginPath(); g.moveTo(X(x), Y(0)); g.lineTo(X(x), Y(PW)); g.stroke(); g.restore();
+      g.font = '500 12px ' + cssVar('--font', 'system-ui'); g.textBaseline = 'top'; g.fillStyle = cssVar('--text-2', '#4c5449');
+      const lab = t('lineOf', nameOf(k)) + ' · ' + metres(sh[k].line), w = g.measureText(lab).width;
+      g.textAlign = 'left'; g.fillText(lab, Math.min(P.W - w - 6, Math.max(6, X(x) - w / 2)), Y(PW) + 2);
+    }
+    s.people.forEach((p, j) => { const q = s.pp[j]; if (!onPitch(q)) return;
+      const team = p.team === TEAM_A || p.team === TEAM_B ? p.team : -1;
+      g.beginPath(); g.arc(X(q[0]), Y(q[1]), team < 0 ? 3.5 : 5.5, 0, 2 * Math.PI);
+      g.fillStyle = team < 0 ? cssVar('--stop', '#9aa29b') : TC.fill[team]; g.fill();
+      g.lineWidth = 1.5; g.strokeStyle = team < 0 ? 'rgba(0,0,0,0.25)' : TC.edge[team]; g.stroke(); });
+    if (onPitch(s.bp)) { g.beginPath(); g.arc(X(s.bp[0]), Y(s.bp[1]), 4.2, 0, 2 * Math.PI); g.fillStyle = '#ffffff'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#111'; g.stroke(); }
+    $('pitch').setAttribute('aria-label', t('pitchTitle') + ' · ' + clockOf(s.t));
+  }
+  function drawPasses(P, k) {                     // as if the team attacks to the right
+    const {g, X, Y} = P, A = R.pitch, ink = cssVar('--text', '#121611'), muted = cssVar('--text-3', '#7b8478');
+    const flipAt = p => { const d = k === TEAM_A ? A.dir.dirA[p.i] : -A.dir.dirA[p.i]; return q => d > 0 ? q : [PL - q[0], PW - q[1]]; };
+    for (const p of A.passes.filter(q => q.team === k)) {
+      const f = flipAt(p), a = f(p.from), b = f(p.to), x1 = X(a[0]), y1 = Y(a[1]), x2 = X(b[0]), y2 = Y(b[1]), ang = Math.atan2(y2 - y1, x2 - x1);
+      g.save(); g.strokeStyle = p.ok ? ink : muted; g.fillStyle = g.strokeStyle; g.globalAlpha = p.ok ? 0.85 : 0.75; g.lineWidth = p.ok ? 2 : 1.6;
+      if (!p.ok) g.setLineDash([5, 4]);
+      g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2 - 7 * Math.cos(ang), y2 - 7 * Math.sin(ang)); g.stroke(); g.setLineDash([]);
+      g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - 9 * Math.cos(ang - 0.4), y2 - 9 * Math.sin(ang - 0.4)); g.lineTo(x2 - 9 * Math.cos(ang + 0.4), y2 - 9 * Math.sin(ang + 0.4)); g.closePath(); g.fill();
+      g.beginPath(); g.arc(x1, y1, 2.6, 0, 2 * Math.PI); g.fill(); g.restore();
+    }
+    $('pitch').setAttribute('aria-label', t('chip_passes', nameOf(k)));
+  }
+  function drawPitchLinesOnly(P) {
+    const {g, X, Y} = P; g.strokeStyle = cssVar('--pitch-line', 'rgba(18,22,17,0.38)'); g.lineWidth = 1.2; g.beginPath();
+    for (const [x1, y1, x2, y2] of PITCH_LINES) { g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); } g.stroke();
+  }
+  function renderPitchCard() {
+    const A = R.pitch, card = $('pitch-card'), box = $('pitch-metrics');
+    card.hidden = false; box.replaceChildren();
+    const ok = !!(A && A.ok);
+    $('pitch-off').hidden = ok; $('pitch-body').hidden = !ok; box.hidden = !ok;
+    if (!ok) { $('pitch-off').textContent = t('pitchOff'); return; }
+    const chips = $('pitch-chips'); chips.replaceChildren();
+    for (const [k, label] of [['live', t('chip_pitchLive')], ['heatA', t('chip_heat', nameOf(0))], ['heatB', t('chip_heat', nameOf(1))], ['passA', t('chip_passes', nameOf(0))], ['passB', t('chip_passes', nameOf(1))], ['shots', t('chip_shots')]]) {
+      const b = el('button', {type: 'button', class: 'chip-btn' + (k === pitchMode ? ' on' : ''), 'aria-pressed': String(k === pitchMode)}, label);
+      b.addEventListener('click', () => { pitchMode = k; if (k !== 'shots' && addingShot) { addingShot = false; $('pitch').classList.remove('adding'); $('shot-hint').textContent = ''; } renderPitchCard(); });
+      chips.append(b);
+    }
+    const right = A.dir.dirA.find(v => v) > 0, side = v => t(v ? 'sideRight' : 'sideLeft');
+    let dirLine = t('dirText', subjectOf(0), side(right), subjectOf(1), side(!right));
+    if (A.dir.switchAt != null) dirLine += ' ' + t('dirSwitch', iso(clockOf(A.dir.switchAt)));
+    $('pitch-dir').textContent = dirLine + ' ' + t('pitchMapped', pctIn(A.mappedShare));
+    $('pitch-heat-note').hidden = pitchMode === 'live';
+    if (pitchMode !== 'live') $('pitch-heat-note').textContent = pitchMode === 'shots' ? t('shotMapNote', nameOf(0), nameOf(1)) : pitchMode.startsWith('pass') ? t('passNote') : t('heatNote', nameOf(pitchMode === 'heatA' ? 0 : 1));
+    const card2 = (title, values, hint) => {
+      const c = el('div', {class: 'metric'}); c.append(el('div', {class: 'm-title'}, title));
+      for (const k of [0, 1]) { const r = el('div', {class: 'm-row'}), nm = el('span', {class: 'm-name'});
+        nm.append(kitDot(k, true), document.createTextNode(teamLabel(k))); r.append(nm, el('b', {}, values[k])); c.append(r); }
+      c.append(el('div', {class: 'm-hint'}, hint)); box.append(c);
+    };
+    const own = A.thirds.map(c => c[0] + c[1] + c[2]);
+    card2(t('mFinal'), [0, 1].map(k => own[k] >= 5 ? pct(A.thirds[k][2] / own[k]) : '–'), t('mFinalHint'));
+    card2(t('mTilt'), [0, 1].map(k => A.tilt ? pct(A.tilt[k]) : '–'), t('mTiltHint'));
+    card2(t('mWidth'), A.shape.map(o => o.width[0] == null && o.width[1] == null ? '–' : metres(o.width[0]) + ' / ' + metres(o.width[1])), t('mWidthHint'));
+    card2(t('mLine'), A.shape.map(o => o.line[1] == null ? '–' : metres(o.line[1]) + (o.length[1] == null ? '' : ' · ' + metres(o.length[1]))), t('mLineHint'));
+    const PS = A.passStats.teams;
+    card2(t('mPasses'), PS.map(o => o.attempted ? t('nOfM', o.completed, o.attempted) + (o.accuracy != null ? ' · ' + pct(o.accuracy) : '') : '–'), t('mPassesHint'));
+    card2(t('mProg'), PS.map(o => String(o.progressive)), t('mProgHint'));
+    card2(t('mSeqLong'), PS.map(o => o.longest_sequence ? passesWord(o.longest_sequence) : '–'), t('mSeqLongHint'));
+    card2(t('mSeq3'), PS.map(o => String(o.sequences_3_plus)), t('mSeq3Hint'));
+    renderPitch(currentIndex(player.currentTime || R.t0));
+  }
+  const passesWord = n => rtl() ? arCount(n, 'تمريرة واحدة', 'تمريرتين', 'تمريرات', 'تمريرة') : n + (n === 1 ? ' pass' : ' passes');
+  $('pitch-flip').addEventListener('click', () => {
+    if (!R) return; R.flip = !R.flip; R.pitch = pitchAnalysis(R.samples, R.states, R.flip, R.summary.spells);
+    R.summary.metrics.pitch = pitchMetrics(R.pitch);
+    R.shots = R.shots.filter(q => q.why === 'manual').concat(R.pitch.ok ? findShots(R.samples, R.states, R.pitch.dir.dirA) : []);   // what you added stays
+    R.summary.metrics.shots = shotMetrics(); renderDash();
+  });
+  function pitchMetrics(A) {                     // for the saved summary
+    if (!A || !A.ok) return {mapped: false};
+    const r1 = v => v == null ? null : Math.round(v * 10) / 10, own = A.thirds.map(c => c[0] + c[1] + c[2]);
+    return {mapped: true, frames_mapped_share: Math.round(A.mappedShare * 1000) / 1000,
+      team_a_attacks: A.dir.dirA.find(v => v) > 0 ? 'right' : 'left', ends_changed_at_seconds: A.dir.switchAt,
+      thirds_with_ball: A.thirds.map((c, k) => own[k] ? {own: c[0] / own[k], middle: c[1] / own[k], final: c[2] / own[k]} : null),
+      field_tilt: A.tilt, width_m: A.shape.map(o => ({with_ball: r1(o.width[0]), without_ball: r1(o.width[1])})),
+      back_line_height_m_defending: A.shape.map(o => r1(o.line[1])), length_m_defending: A.shape.map(o => r1(o.length[1])),
+      passes: A.passStats.teams, pass_list: A.passes.map(p => ({seconds: r1(p.t), received_seconds: r1(p.t2), team: p.team === TEAM_A ? 'team_a' : 'team_b', completed: p.ok,
+        from_m: p.from.map(r1), to_m: p.to.map(r1), length_m: r1(p.length), forward_m: r1(p.forward)})),
+      note: 'Pitch positions come from the main camera; only players in shot are counted.'};
+  }
+
+  // ------------------------------------------------------------------ shots and expected goals
+  let addingShot = false;
+  const shotsWord = (n, gen) => !n ? t('noShotsWord') : rtl() ? arCount(n, 'تسديدة واحدة', gen ? 'تسديدتين' : 'تسديدتان', 'تسديدات', 'تسديدة') : n + (n === 1 ? ' shot' : ' shots');
+  const goalsWord = n => !n ? t('noGoalsWord') : rtl() ? arCount(n, 'هدف واحد', 'هدفان', 'أهداف', 'هدفًا') : n + (n === 1 ? ' goal' : ' goals');
+  const liveShots = () => R.shots.filter(s => s.status !== 'no');
+  function shotTotals() { return [0, 1].map(k => { const sh = liveShots().filter(s => s.team === k); return {n: sh.length, xg: sh.reduce((a, s) => a + s.xg, 0), goals: sh.filter(s => s.goal).length}; }); }
+  function drawnShot(s) { return s.team === TEAM_A ? [PL - s.toLine, s.lateral] : [s.toLine, PW - s.lateral]; }   // A attacks right, B left
+  function drawShots(P) {
+    const {g, X, Y} = P;
+    for (const s of liveShots().sort((a, b) => b.xg - a.xg)) {
+      const [x, y] = drawnShot(s), r = 4 + 16 * Math.sqrt(s.xg);
+      g.beginPath(); g.arc(X(x), Y(y), r, 0, 2 * Math.PI); g.globalAlpha = s.status === 'auto' ? 0.65 : 0.9; g.fillStyle = TC.fill[s.team]; g.fill(); g.globalAlpha = 1;
+      g.lineWidth = 1.5; g.strokeStyle = TC.edge[s.team]; g.stroke();
+      if (s.goal) { g.beginPath(); g.arc(X(x), Y(y), r + 4, 0, 2 * Math.PI); g.lineWidth = 2.5; g.strokeStyle = cssVar('--text', '#121611'); g.stroke(); }
+    }
+    $('pitch').setAttribute('aria-label', t('chip_shots'));
+  }
+  function renderXgRace() {
+    const box = $('xg-race'); box.replaceChildren();
+    const W = Math.max(280, box.clientWidth), H = 160, top = 14, bottom = H - 24, tot = shotTotals();
+    const ymax = Math.max(1, Math.ceil(Math.max(tot[0].xg, tot[1].xg) * 2) / 2);
+    const g = {a: R.t0, b: R.t1, x0: rtl() ? 6 : 34, x1: rtl() ? W - 34 : W - 6}, yOf = v => bottom - (bottom - top) * v / ymax;
+    const s = sv('svg', {viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img',
+      'aria-label': t('xgRace') + ': ' + [0, 1].map(k => teamLabel(k) + ' ' + tot[k].xg.toFixed(2)).join('، ')});
+    for (const v of [0, ymax / 2, ymax]) {
+      s.append(sv('line', {x1: g.x0, x2: g.x1, y1: yOf(v), y2: yOf(v), stroke: v ? 'var(--line)' : 'var(--line-2)', 'stroke-width': 1}));
+      const tx = sv('text', {x: rtl() ? W - 4 : 4, y: yOf(v) + 4, 'text-anchor': 'start'}); tx.textContent = (Math.round(v * 10) / 10).toString(); s.append(tx);
+    }
+    for (const v of niceTicks(g.a, g.b, Math.max(3, Math.floor(W / 110)))) { const tx = sv('text', {x: Math.min(W - 18, Math.max(18, xFor(v, g))), y: H - 4, 'text-anchor': 'middle'}); tx.textContent = clockOf(v); s.append(tx); }
+    for (const k of [0, 1]) {
+      const mine = liveShots().filter(q => q.team === k).sort((a, b) => a.t - b.t); let cum = 0, d = 'M' + xFor(R.t0, g) + ',' + yOf(0);
+      const goals = [];
+      for (const q of mine) { d += ' L' + xFor(q.t, g) + ',' + yOf(cum); cum += q.xg; d += ' L' + xFor(q.t, g) + ',' + yOf(cum); if (q.goal) goals.push([xFor(q.t, g), yOf(cum)]); }
+      d += ' L' + xFor(R.t1, g) + ',' + yOf(cum);
+      s.append(sv('path', {d, fill: 'none', stroke: TC.edge[k], 'stroke-width': 4, 'stroke-linejoin': 'round'}));
+      s.append(sv('path', {d, fill: 'none', stroke: TC.fill[k], 'stroke-width': 2.5, 'stroke-linejoin': 'round'}));
+      for (const [x, y] of goals) s.append(sv('circle', {cx: x, cy: y, r: 5, fill: TC.fill[k], stroke: 'var(--text)', 'stroke-width': 2}));
+    }
+    const ph = sv('line', {x1: 0, x2: 0, y1: top, y2: bottom, stroke: 'var(--text)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3', 'pointer-events': 'none'});
+    s.append(ph); box.append(s); g.ph = ph; xgG = g;
+  }
+  let xgG = null;
+  function renderShots() {
+    const ok = !!(R.pitch && R.pitch.ok); $('shots-card').hidden = !ok; if (!ok) return;
+    const tot = shotTotals(), box = $('xg-totals'); box.replaceChildren();
+    for (const k of [0, 1]) { const d = el('div', {class: 'xg-team'}); d.append(kitDot(k), el('span', {}, teamLabel(k)), el('b', {class: 'ltr'}, tot[k].xg.toFixed(2)),
+      el('div', {class: 'sub2'}, shotsWord(tot[k].n) + ' · ' + goalsWord(tot[k].goals))); box.append(d); }
+    $('xg-race').hidden = !liveShots().length;
+    if (liveShots().length) renderXgRace(); else xgG = null;
+    const list = $('shot-list'); list.replaceChildren();
+    if (!R.shots.length) list.append(el('p', {class: 'note'}, t('noShots')));
+    const tog = (key, on, fn) => { const b = el('button', {type: 'button', class: 'chip-btn tog' + (on ? ' on' : ''), 'aria-pressed': String(!!on)}, t(key)); b.addEventListener('click', fn); return b; };
+    R.shots.slice().sort((a, b) => a.t - b.t).forEach(q => {
+      const row = el('div', {class: 'mrow' + (q.status === 'no' ? ' rejected' : '')});
+      const tb = el('button', {type: 'button', class: 'mtime ltr'}, clockOf(q.t)); tb.addEventListener('click', () => seekTo(q.t - 1));
+      const tag = q.why === 'manual' ? 'manual' : q.status;
+      row.append(...[tb, kitDot(q.team, true), el('span', {class: 'mtext'}, teamLabel(q.team) + ' · ' + t('shotFrom', metres(q.distance)) + ' · ' + t('tag_' + tag)),
+        el('span', {class: 'sxg ltr'}, q.xg.toFixed(2)),
+        q.status !== 'no' ? tog('shotGoal', q.goal, () => { q.goal = !q.goal; if (q.goal && q.status === 'auto') q.status = 'ok'; shotsChanged(); }) : null,
+        q.status !== 'no' ? tog('shotPen', q.pen, () => { q.pen = !q.pen; q.xg = q.pen ? XG_PEN : xgFor(q.toLine, q.lateral, false); shotsChanged(); }) : null,
+        q.status === 'auto' ? tog('shotOk', false, () => { q.status = 'ok'; shotsChanged(); }) : null,
+        q.status === 'no' ? tog('shotRestore', false, () => { q.status = q.why === 'manual' ? 'ok' : 'auto'; shotsChanged(); })
+                          : tog('shotRemove', false, () => { q.status = 'no'; q.goal = false; shotsChanged(); })].filter(Boolean));
+      list.append(row);
+    });
+  }
+  function shotMetrics() {
+    const r2 = v => Math.round(v * 100) / 100, r1 = v => Math.round(v * 10) / 10;
+    return {model: 'Logistic regression on shot distance and goal-mouth angle, fitted on 12,313 non-penalty shots from StatsBomb open data; penalties 0.73.',
+      coefficients: {intercept: XG_B[0], angle_radians: XG_B[1], distance_m: XG_B[2]},
+      teams: shotTotals().map(o => ({shots: o.n, xg: r2(o.xg), goals_marked: o.goals})),
+      shots: R.shots.map(q => ({seconds: r1(q.t), team: q.team === TEAM_A ? 'team_a' : 'team_b', status: q.why === 'manual' ? 'added' : q.status === 'ok' ? 'confirmed' : q.status === 'no' ? 'removed' : 'suggested',
+        found_by: q.why, distance_m: r1(q.distance), metres_from_goal_line: r1(q.toLine), across_m: r1(q.lateral), xg: r2(q.xg), penalty: q.pen, goal: q.goal}))};
+  }
+  function shotsChanged() { R.summary.metrics.shots = shotMetrics(); renderShots(); if (pitchMode === 'shots') renderPitch(lastI < 0 ? 0 : lastI); renderSummary(); }
+  function addShot(i, team, toLine, lateral) {
+    const q = shotOf(i, R.samples[i].t, team, toLine, lateral, 'manual'); R.shots.push(q);
+    $('shot-hint').textContent = t('shotAdded', clockOf(q.t)); shotsChanged();
+  }
+  $('shot-add').addEventListener('click', () => {
+    if (!R || !R.pitch || !R.pitch.ok) return;
+    const i = currentIndex(player.currentTime), s = R.samples[i], st = R.states[i], dA = R.pitch.dir.dirA[i];
+    if (s.cam && onPitch(s.bp) && (st === TEAM_A || st === TEAM_B) && dA) {     // where the ball is, for the side that has it
+      const d = st === TEAM_A ? dA : -dA; addShot(i, st, d > 0 ? PL - s.bp[0] : s.bp[0], d > 0 ? s.bp[1] : PW - s.bp[1]); return;
+    }
+    addingShot = true; pitchMode = 'shots'; renderPitchCard(); $('pitch').classList.add('adding');
+    $('shot-hint').textContent = t('shotClick'); $('pitch-card').scrollIntoView({behavior: 'smooth', block: 'center'});
+  });
+  $('pitch').addEventListener('click', e => {
+    if (!addingShot || !R) return;
+    const rc = $('pitch').getBoundingClientRect(), m = 14, sc = (rc.width - 2 * m) / PL;
+    const x = (e.clientX - rc.left - m) / sc, y = PW - (e.clientY - rc.top - m) / sc;
+    if (x < 0 || x > PL || y < 0 || y > PW) return;
+    addingShot = false; $('pitch').classList.remove('adding');
+    const team = x > PL / 2 ? TEAM_A : TEAM_B;        // the drawing has A attacking right and B left
+    addShot(currentIndex(player.currentTime), team, team === TEAM_A ? PL - x : x, team === TEAM_A ? y : PW - y);
+  });
+
+  // ------------------------------------------------------------------ moments
+  const MOMENT_KINDS = ['top', 'loss', 'regain', 'press', 'spell', 'seq', 'stop'];
+  let momentFilter = 'top';
+  const isTop = m => (m.kind === 'seq' && m.passes >= 5) || m.kind === 'regain' || (m.kind === 'press' && m.won) || m.kind === 'spell' || (m.kind === 'stop' && m.seconds >= 20);
+  function momentText(m) {
+    const T = nameOf;
+    if (m.kind === 'loss') return t('mtLoss', T(m.team), T(m.to));
+    if (m.kind === 'regain') return t('mtRegain', T(m.team), secondsWord(m.seconds));
+    if (m.kind === 'press') return t(m.won ? 'mtPressWon' : 'mtPress', T(m.team), m.players);
+    if (m.kind === 'spell') return t(m.longest ? 'mtLongest' : 'mtSpell', T(m.team), secondsWord(m.seconds));
+    if (m.kind === 'seq') return t('mtSeq', rtl() ? subjectOf(m.team) : T(m.team), passesWord(m.passes));
+    return t('mtStop', secondsWord(m.seconds));
+  }
+  function clipRange(m) {                              // from a few seconds before the moment to a few after
+    const after = m.kind === 'spell' || m.kind === 'seq' ? Math.min(m.end - m.t, 20) + 1 : m.kind === 'stop' ? Math.min(m.seconds, 8) : 5;
+    return [Math.max(R.t0, m.t - 3), Math.min(R.t1, m.t + after)];
+  }
+  const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19h14"/></svg>';
+  function renderMoments() {
+    const list = R.summary.metrics.moments, chips = $('moment-chips'), box = $('moments');
+    chips.replaceChildren(); box.replaceChildren();
+    const counts = {top: list.filter(isTop).length};
+    for (const k of MOMENT_KINDS.slice(1)) counts[k] = list.filter(m => m.kind === k).length;
+    if (!counts[momentFilter]) momentFilter = MOMENT_KINDS.find(k => counts[k]) || 'top';
+    for (const k of MOMENT_KINDS) {
+      const b = el('button', {type: 'button', class: 'chip-btn' + (k === momentFilter ? ' on' : ''), 'aria-pressed': String(k === momentFilter)}, t('chip_' + k) + ' ' + iso('(' + counts[k] + ')'));
+      b.addEventListener('click', () => { momentFilter = k; renderMoments(); });
+      chips.append(b);
+    }
+    const shown = list.filter(m => momentFilter === 'top' ? isTop(m) : m.kind === momentFilter);
+    if (!shown.length) { box.append(el('p', {class: 'note'}, t('noMoments'))); return; }
+    for (const m of shown) {
+      const row = el('div', {class: 'mrow'});
+      const tb = el('button', {type: 'button', class: 'mtime ltr'}, clockOf(m.t));
+      tb.addEventListener('click', () => { seekTo(m.t); $('player-box').scrollIntoView({behavior: 'smooth', block: 'center'}); });
+      row.append(tb, m.team >= 0 ? kitDot(m.team, true) : el('span', {class: 'swatch stop', 'aria-hidden': 'true'}), el('span', {class: 'mtext'}, momentText(m)));
+      if (canRecord()) {
+        const cb = el('button', {type: 'button', class: 'mclip icon-btn', 'aria-label': t('clip'), title: t('clip')}); cb.innerHTML = ICON_DL;
+        cb.addEventListener('click', () => { const [a, b] = clipRange(m); recordVideo(a, b, 'moment-' + clockOf(m.t).replace(':', '-'), cb); });
+        row.append(cb);
+      }
+      box.append(row);
+    }
+  }
+
+  // ------------------------------------------------------------------ written summary
+  let summaryEdited = false;
+  function renderSummary() { const ta = $('summary-text'); if (!summaryEdited) ta.value = writeSummary(); }
+  function writeSummary() {
+    const S = R.summary, M = S.metrics, ar = rtl(), N = nameOf;
+    const madeUp = k => (R.teams.names[k] || '').charAt(0) === MARK;
+    const who = k => ar && !madeUp(k) ? 'فريق ' + N(k) : N(k);          // a subject the Arabic verb can agree with
+    const P = v => pctIn(v), C = v => iso(clockOf(v)), out = [];
+    const T = S.teams, held = T[0].seconds_on_ball + T[1].seconds_on_ball;
+    if (held > 0) out.push(ar ? `كانت الكرة مع ${N(0)} في ${P(T[0].possession)} من وقت اللعب الفعلي، مقابل ${P(T[1].possession)} مع ${N(1)}.`
+                              : `${N(0)} had the ball for ${P(T[0].possession)} of the time in play, ${N(1)} for ${P(T[1].possession)}.`);
+    if (M.stoppages) out.push(ar ? `ودارت الكرة فعليًا ${spanWords(M.in_play_seconds)} من أصل ${spanWords(S.duration_seconds)}، إذ توقف اللعب ${timesWord(M.stoppages)}، أطولها ${spanWords(M.longest_stoppage_seconds)}.`
+                                 : `The ball was in play for ${spanWords(M.in_play_seconds)} of ${spanWords(S.duration_seconds)}: play stopped ${timesWord(M.stoppages)}, the longest for ${spanWords(M.longest_stoppage_seconds)}.`);
+    else out.push(ar ? 'ولم يُرصد توقف للعب في الجزء المحلَّل.' : 'No stoppage was found in the analysed stretch.');
+    // stretches where one team mostly had the ball, the three longest, in order
+    const bars = M.momentum.bars, phases = [];
+    bars.forEach(b => { const k = b.value >= 0.4 ? 0 : b.value <= -0.4 ? 1 : -1, last = phases[phases.length - 1];
+      if (last && last.team === k) last.end = b.end; else phases.push({team: k, start: b.start, end: b.end}); });
+    const top3 = phases.filter(p => p.team >= 0).sort((a, b) => (b.end - b.start) - (a.end - a.start)).slice(0, 3).sort((a, b) => a.start - b.start);
+    if (bars.length >= 2 && top3.length) out.push(ar ? 'وكانت الكرة غالبًا ' + top3.map(p => `مع ${N(p.team)} بين ${C(p.start)} و${C(p.end)}`).join('، ثم ') + '.'
+                                                    : 'The ball was mostly with ' + top3.map(p => `${N(p.team)} from ${C(p.start)} to ${C(p.end)}`).join(', then with ') + '.');
+    const longK = T[0].longest_spell_seconds >= T[1].longest_spell_seconds ? 0 : 1, longS = T[longK].longest_spell_seconds;
+    const longSpell = (M.moments || []).find(m => m.kind === 'spell' && m.longest && m.team === longK);
+    if (longS > 0) out.push(ar ? `وأطول احتفاظ بالكرة كان مع ${N(longK)}: ${spanWords(longS)}` + (longSpell ? ` بدءًا من ${C(longSpell.t)}.` : '.')
+                               : `The longest spell on the ball was ${N(longK)}'s: ${spanWords(longS)}` + (longSpell ? ` from ${C(longSpell.t)}.` : '.'));
+    const L = M.ball_losses, Q = M.quick_regains;
+    if (L[0] + L[1] > 0) {
+      const lost = [0, 1].filter(k => L[k] > 0), kept = [0, 1].filter(k => !L[k]);
+      let line = ar ? 'وضاعت الكرة ' + lost.map(k => `من ${N(k)} ${timesWord(L[k])}`).join(' و') + (kept.length ? `، ولم تضع من ${N(kept[0])}` : '') + '.'
+                    : lost.map(k => `${N(k)} lost the ball ${timesWord(L[k])}`).join(' and ') + (kept.length ? `; ${N(kept[0])} never did` : '') + '.';
+      const quick = [0, 1].filter(k => Q[k] > 0);
+      if (quick.length) line += ar ? ' ونجح ' + quick.map(k => `${who(k)} في استعادتها خلال 5 ثوانٍ ${timesWord(Q[k])}`).join('، و') + '.'
+                                   : ' ' + quick.map(k => `${N(k)} won it back within 5 seconds ${timesWord(Q[k])}`).join(', and ') + '.';
+      out.push(line);
+    }
+    const pr = M.pressure_on_ball;
+    if (pr[0] != null && pr[1] != null && Math.abs(pr[0] - pr[1]) >= 0.3) {
+      const k = pr[0] > pr[1] ? 0 : 1;
+      out.push(ar ? `وضغط ${who(k)} أكثر على حامل الكرة، بـ${pr[k].toFixed(1)} لاعب في المتوسط قرب الكرة وهي مع منافسه، مقابل ${pr[1 - k].toFixed(1)}.`
+                  : `${N(k)} pressed the ball carrier harder, with ${pr[k].toFixed(1)} players near the ball on average when the other team had it, against ${pr[1 - k].toFixed(1)}.`);
+    }
+    const sp = M.superiority.share_more;
+    if (sp[0] != null && sp[1] != null && Math.abs(sp[0] - sp[1]) >= 0.05) {
+      const k = sp[0] > sp[1] ? 0 : 1;
+      out.push(ar ? `وكان ${who(k)} متفوقًا عدديًا حول الكرة في ${P(sp[k])} من الوقت، مقابل ${P(sp[1 - k])} لمنافسه.`
+                  : `${N(k)} had more players around the ball ${P(sp[k])} of the time, against ${P(sp[1 - k])} for ${N(1 - k)}.`);
+    }
+    const A = R.pitch;                              // from the pitch map, when there is one
+    if (A && A.ok) {
+      const own = A.thirds.map(c => c[0] + c[1] + c[2]), fin = [0, 1].map(k => own[k] >= 5 ? A.thirds[k][2] / own[k] : null);
+      if (fin[0] != null && fin[1] != null && Math.max(fin[0], fin[1]) >= 0.05) {
+        const k = fin[0] >= fin[1] ? 0 : 1;
+        out.push(ar ? `وعلى خريطة الملعب، قضى ${who(k)} ${P(fin[k])} من وقت امتلاكه الكرة في الثلث الأخير قرب مرمى منافسه، مقابل ${P(fin[1 - k])} لـ${N(1 - k)}.`
+                    : `On the pitch map, ${N(k)} spent ${P(fin[k])} of their time on the ball in the final third, against ${P(fin[1 - k])} for ${N(1 - k)}.`);
+      }
+      const ln = A.shape.map(o => o.line[1]);
+      if (ln[0] != null && ln[1] != null && Math.abs(ln[0] - ln[1]) >= 3) {
+        const k = ln[0] > ln[1] ? 0 : 1;
+        out.push(ar ? `ودافع ${who(k)} بخط أعلى، على بعد نحو ${arCount(Math.round(ln[k]), 'متر واحد', 'مترين', 'أمتار', 'مترًا')} من مرماه، مقابل ${arCount(Math.round(ln[1 - k]), 'متر واحد', 'مترين', 'أمتار', 'مترًا')} لمنافسه.`
+                    : `${N(k)} defended with a higher back line, about ${Math.round(ln[k])} m from their own goal, against ${Math.round(ln[1 - k])} m for their opponents.`);
+      }
+    }
+    if (A && A.ok) {
+      const PS = A.passStats.teams;
+      if (PS[0].attempted + PS[1].attempted >= 5) {
+        out.push(ar ? `وأكمل ${who(0)} ${passesWord(PS[0].completed)} من ${PS[0].attempted} رُصدت له، مقابل ${PS[1].completed} من ${PS[1].attempted} لـ${N(1)}.`
+                    : `${N(0)} completed ${PS[0].completed} of the ${PS[0].attempted} passes found, ${N(1)} ${PS[1].completed} of ${PS[1].attempted}.`);
+        const k = PS[0].longest_sequence >= PS[1].longest_sequence ? 0 : 1, L = PS[k].longest_sequence;
+        if (L >= 4) out.push(ar ? `وأطول سلسلة تمرير كانت لـ${N(k)}: ${passesWord(L)} متتالية.` : `The longest passing move was by ${N(k)}: ${L} passes in a row.`);
+      }
+    }
+    if (A && A.ok && R.shots && liveShots().length) {
+      const tot = shotTotals(), x = k => iso(tot[k].xg.toFixed(2));
+      out.push(ar ? `وبلغت الأهداف المتوقعة (xG) لـ${N(0)} ${x(0)} من ${shotsWord(tot[0].n, true)}، مقابل ${x(1)} من ${shotsWord(tot[1].n, true)} لـ${N(1)}.`
+                  : `Expected goals (xG): ${N(0)} ${x(0)} from ${shotsWord(tot[0].n)}, ${N(1)} ${x(1)} from ${shotsWord(tot[1].n)}.`);
+    }
+    out.push(ar ? '(أرقام تقديرية محسوبة آليًا من الفيديو.)' : '(Automatic estimates from the video.)');
+    return out.join(ar ? ' ' : ' ').replace(/\u2063/g, '');
+  }
+  $('summary-text').addEventListener('input', () => { summaryEdited = true; });
+  $('copy-summary').addEventListener('click', async () => {
+    const ta = $('summary-text'), btn = $('copy-summary');
+    try { await navigator.clipboard.writeText(ta.value); } catch (e) { ta.select(); try { document.execCommand('copy'); } catch (e2) { /* nothing more to try */ } }
+    btn.textContent = t('copied'); setTimeout(() => { btn.textContent = t('copy'); }, 1600);
+  });
 
   function renderSpells() {
     const tb = $('spells-table'); tb.replaceChildren();
@@ -1179,8 +2610,8 @@ footer a { color: inherit; }
 
   function renderQuality() {
     const S = R.summary, q = $('quality'); q.replaceChildren();
-    [t('qFrames', count(S.frames_analysed)), t('qBall', pct(S.ball_seen_share), pct(S.ball_filled_share)),
-     t('qView', pct(S.no_pitch_view_share)), t('qModel', S.detector)].forEach(s => q.append(el('li', {}, s)));
+    [t('qFrames', count(S.frames_analysed)), t('qBall', pctIn(S.ball_seen_share), pctIn(S.ball_filled_share)),
+     t('qView', pctIn(S.no_pitch_view_share)), t('qModel', S.detector)].forEach(s => q.append(el('li', {}, s)));
   }
 
   // ------------------------------------------------------------------ marked video
@@ -1190,44 +2621,57 @@ footer a { color: inherit; }
     if (overlay.width !== Math.round(cw * dpr) || overlay.height !== Math.round(ch * dpr)) { overlay.width = Math.round(cw * dpr); overlay.height = Math.round(ch * dpr); }
     const ctx = overlay.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cw, ch);
     if (!R || !player.videoWidth) return;
-    const vw = player.videoWidth, vh = player.videoHeight, s = Math.min(cw / vw, ch / vh), ox = (cw - vw * s) / 2, oy = (ch - vh * s) / 2;
-    const time = player.currentTime, i = Math.round((time - R.t0) * HZ);
+    const vw = player.videoWidth, vh = player.videoHeight, s = Math.min(cw / vw, ch / vh);
+    paintOverlay(ctx, cw, ch, (cw - vw * s) / 2, (ch - vh * s) / 2, s, player.currentTime, false);
+  }
+  // Rings under the players, a triangle over the ball and a bar with who has it, on any canvas.
+  function paintOverlay(ctx, cw, ch, ox, oy, s, time, forFile) {
+    const i = Math.round((time - R.t0) * HZ);
     if (i < 0 || i >= R.samples.length) return;
-    const smp = R.samples[i], st = R.states[i], kit = R.kitDisplay;
+    const smp = R.samples[i], st = R.states[i], kit = R.kitDisplay, stopped = !!R.stopped[i];
+    const k = Math.max(1, ch / 540);                    // thicker marks on bigger pictures
     for (const p of smp.people) {
       const x1 = ox + p.box[0] * s, x2 = ox + p.box[2] * s, y2 = oy + p.box[3] * s, rx = Math.max(6, (x2 - x1) * 0.6), ry = Math.max(3, (x2 - x1) * 0.22);
       ctx.beginPath(); ctx.ellipse((x1 + x2) / 2, y2, rx, ry, 0, -Math.PI / 4, Math.PI * 1.31);
-      if (p.team === TEAM_A || p.team === TEAM_B) { ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = kit[p.team]; ctx.stroke(); }
-      else { ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(30,30,30,0.9)'; ctx.stroke(); }
+      if (p.team === TEAM_A || p.team === TEAM_B) { ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.stroke(); ctx.lineWidth = 2 * k; ctx.strokeStyle = kit[p.team]; ctx.stroke(); }
+      else { ctx.lineWidth = k; ctx.strokeStyle = 'rgba(30,30,30,0.9)'; ctx.stroke(); }
     }
     const b = R.ball[i];
     if (b) {
-      const bx = ox + b[0] * s, by = oy + b[1] * s - 8;
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 7, by - 12); ctx.lineTo(bx + 7, by - 12); ctx.closePath();
-      if (st === TEAM_A || st === TEAM_B) { ctx.fillStyle = kit[st]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.stroke(); }
-      else { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      const bx = ox + b[0] * s, by = oy + b[1] * s - 8 * k;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 7 * k, by - 12 * k); ctx.lineTo(bx + 7 * k, by - 12 * k); ctx.closePath();
+      if (!stopped && (st === TEAM_A || st === TEAM_B)) { ctx.fillStyle = kit[st]; ctx.fill(); ctx.lineWidth = 2 * k; ctx.strokeStyle = '#000'; ctx.stroke(); }
+      else { ctx.lineWidth = 2 * k; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     }
-    const held = R.cum[i], tot = held[0] + held[1], bh = Math.max(28, Math.round(ch * 0.075)), pad = 12, isR = rtl();
+    const held = R.cum[i], tot = held[0] + held[1], bh = Math.max(28, Math.round(ch * 0.075)), pad = 12 * k, isR = rtl();
     ctx.fillStyle = 'rgba(8,12,10,0.78)'; ctx.fillRect(0, 0, cw, bh);
-    const fs = Math.max(12, Math.min(16, Math.round(bh * 0.48)));
+    const fs = Math.max(12, Math.min(16 * k, Math.round(bh * 0.48)));
     ctx.font = '600 ' + fs + 'px "IBM Plex Sans Arabic", system-ui, sans-serif'; ctx.textBaseline = 'middle'; ctx.direction = isR ? 'rtl' : 'ltr';
-    const sx = isR ? cw - pad - 14 : pad;
+    const sq = 14 * k, sx = isR ? cw - pad - sq : pad;
     let startX = isR ? cw - pad : pad;
-    if (st === TEAM_A || st === TEAM_B) {
-      ctx.fillStyle = kit[st]; ctx.fillRect(sx, bh / 2 - 7, 14, 14);
-      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(sx + 0.5, bh / 2 - 6.5, 13, 13);
-      startX += isR ? -22 : 22;
+    if (stopped || st === TEAM_A || st === TEAM_B) {
+      ctx.fillStyle = stopped ? '#8a938c' : kit[st]; ctx.fillRect(sx, bh / 2 - sq / 2, sq, sq);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(sx + 0.5, bh / 2 - sq / 2 + 0.5, sq - 1, sq - 1);
+      startX += (isR ? -1 : 1) * (sq + 8 * k);
     }
     ctx.fillStyle = '#f1f4ef'; ctx.textAlign = 'start';
-    const holder = t('liveNow') + ': ' + (st === TEAM_A || st === TEAM_B ? teamLabel(st) : t('nobody'));
+    const holder = stopped ? t('playStopped') : t('liveNow') + ': ' + (st === TEAM_A || st === TEAM_B ? teamLabel(st) : t('nobody'));
     ctx.fillText(holder, startX, bh / 2);
-    const room = cw - 2 * pad - Math.abs(startX - (isR ? cw - pad : pad)) - ctx.measureText(holder).width - 16;
-    const splitText = tot ? teamLabel(0) + ' ' + pct(held[0] / tot) + ' · ' + teamLabel(1) + ' ' + pct(held[1] / tot) : '';
-    let right = splitText ? splitText + '   ' + clockOf(time) : clockOf(time);
-    if (ctx.measureText(right).width > room) right = clockOf(time);
-    if (ctx.measureText(right).width > room) right = '';
+    const room = cw - 2 * pad - Math.abs(startX - (isR ? cw - pad : pad)) - ctx.measureText(holder).width - 16 * k;
+    // The clock and the running split are drawn apart, and marks around each share keep its % after the number
+    // whichever way the team names are written.
+    const clock = clockOf(time), wClock = ctx.measureText(clock).width, gap = 22 * k, endX = isR ? pad : cw - pad;
+    const lrm = '\u200e', back = isR ? '\u200f' : '\u200e';
+    const share = q => lrm + pct(held[q] / tot) + back;
+    const splitText = tot ? teamLabel(0) + ' ' + share(0) + ' · ' + teamLabel(1) + ' ' + share(1) : '';
     ctx.textAlign = 'end';
-    if (right) ctx.fillText(right, isR ? pad : cw - pad, bh / 2);
+    if (wClock <= room) ctx.fillText(clock, endX, bh / 2);
+    if (splitText && wClock + gap + ctx.measureText(splitText).width <= room) ctx.fillText(splitText, isR ? endX + wClock + gap : endX - wClock - gap, bh / 2);
+    if (forFile) {                                     // a small credit in the corner of recorded videos
+      ctx.font = '500 ' + Math.round(12 * k) + 'px "IBM Plex Sans Arabic", system-ui, sans-serif'; ctx.textAlign = isR ? 'left' : 'right';
+      ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4 * k;
+      ctx.fillText(t('title'), isR ? pad : cw - pad, ch - 14 * k); ctx.shadowBlur = 0;
+    }
   }
 
   const ICONS = {play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
@@ -1266,19 +2710,93 @@ footer a { color: inherit; }
     else if (e.key === ' ' || e.key === 'Enter') { togglePlay(); e.preventDefault(); }
   });
 
+  // ------------------------------------------------------------------ recorded video with the analysis on it
+  const REC_TYPES = ['video/mp4;codecs=avc1.42E01F,mp4a.40.2', 'video/mp4;codecs=avc1.42E01F', 'video/mp4',
+                     'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  function recType() {
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
+    return REC_TYPES.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || null;
+  }
+  const canRecord = () => !!recType();
+  let recording = null;
+  async function recordVideo(a, b, name, btn) {
+    if (recording || running || !R) return;
+    const type = recType(); if (!type) return;
+    const ext = type.startsWith('video/mp4') ? 'mp4' : 'webm', status = $('video-status');
+    const vid = document.createElement('video'); vid.preload = 'auto'; vid.playsInline = true; vid.src = videoURL;
+    vid.style.cssText = 'position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0;pointer-events:none';
+    document.body.append(vid);
+    let audio = null;
+    recording = {cancelled: false};
+    const busy = on => { document.querySelectorAll('.mclip').forEach(x => { x.disabled = on; }); $('dl-video').disabled = on; $('video-cancel').hidden = !on; if (btn) btn.classList.toggle('busy', on); };
+    busy(true); status.hidden = false;
+    try {
+      await new Promise((res, rej) => { vid.addEventListener('loadeddata', res, {once: true}); vid.addEventListener('error', () => rej(new Error('read')), {once: true}); });
+      const sc = Math.min(1, 1280 / vid.videoWidth), W = 2 * Math.round(vid.videoWidth * sc / 2), H = 2 * Math.round(vid.videoHeight * sc / 2);
+      const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+      const tracks = c.captureStream(30).getVideoTracks();
+      try {                                            // the sound goes to the file only, not to the speakers
+        audio = new AudioContext(); const src = audio.createMediaElementSource(vid), dest = audio.createMediaStreamDestination();
+        src.connect(dest); tracks.push(...dest.stream.getAudioTracks());
+      } catch (e) { vid.muted = true; }
+      const rec = new MediaRecorder(new MediaStream(tracks), {mimeType: type, videoBitsPerSecond: 5000000});
+      const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      const done = new Promise(res => { rec.onstop = res; });
+      await new Promise(res => { vid.addEventListener('seeked', res, {once: true}); vid.currentTime = a; });
+      const draw = () => { g.drawImage(vid, 0, 0, W, H); paintOverlay(g, W, H, 0, 0, W / vid.videoWidth, vid.currentTime, true); };
+      const endAt = Math.min(b, (isFinite(vid.duration) ? vid.duration : b) - 0.04);
+      draw(); rec.start(1000); await vid.play();
+      await new Promise(res => {
+        let finished = false;
+        const finish = () => { if (!finished) { finished = true; clearInterval(guard); res(); } };
+        vid.addEventListener('ended', finish, {once: true});            // no more frames come once the video ends
+        const guard = setInterval(() => { if (recording.cancelled) finish(); }, 250);
+        const tick = () => {
+          if (finished) return;
+          draw();
+          status.textContent = t('videoProgress', iso(clockOf(Math.max(0, vid.currentTime - a))), iso(clockOf(b - a)));
+          if (recording.cancelled || vid.currentTime >= endAt || vid.ended) { finish(); return; }
+          if (vid.requestVideoFrameCallback) vid.requestVideoFrameCallback(tick); else requestAnimationFrame(tick);
+        };
+        tick();
+      });
+      vid.pause(); rec.stop(); await done;
+      if (!recording.cancelled) { downloadBlob(name + '.' + ext, new Blob(chunks, {type: type.split(';')[0]})); status.textContent = t('videoDone'); }
+      else status.textContent = '';
+    } catch (e) { console.error(e); status.textContent = t('videoFail'); }
+    finally {
+      if (audio) audio.close().catch(() => {});
+      vid.pause(); vid.removeAttribute('src'); vid.load(); vid.remove();
+      recording = null; busy(false);
+    }
+  }
+  $('dl-video').addEventListener('click', () => { if (R) recordVideo(R.t0, R.t1, 'who-has-the-ball', null); });
+  $('video-cancel').addEventListener('click', () => { if (recording) recording.cancelled = true; });
+
   // ------------------------------------------------------------------ downloads
   function downloadBlob(name, blob) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   }
-  $('dl-json').addEventListener('click', () => { if (R) downloadBlob('summary.json', new Blob([JSON.stringify(R.summary, null, 2)], {type: 'application/json'})); });
+  $('dl-json').addEventListener('click', () => {
+    if (!R) return;
+    const out = Object.assign({}, R.summary, {written_summary: $('summary-text').value});
+    downloadBlob('summary.json', new Blob([JSON.stringify(out, null, 2)], {type: 'application/json'}));
+  });
   $('dl-csv').addEventListener('click', () => {
     if (!R) return;
-    const rows = [['seconds', 'state', 'p_team_a', 'p_team_b', 'p_none', 'ball_x', 'ball_y', 'ball', 'players_team_a', 'players_team_b', 'pitch_share', 'balls_lost_team_a', 'balls_lost_team_b'].join(',')];
-    R.samples.forEach((s, i) => { const p = R.proba[i], b = R.ball[i];
-      rows.push([s.t.toFixed(2), STATE_NAMES[R.states[i]], p[0].toFixed(3), p[1].toFixed(3), p[2].toFixed(3), b ? b[0].toFixed(1) : '', b ? b[1].toFixed(1) : '',
-        ['missing', 'seen', 'filled'][R.source[i]], s.people.filter(q => q.team === TEAM_A).length, s.people.filter(q => q.team === TEAM_B).length, s.share.toFixed(2),
-        R.losses[i][0], R.losses[i][1]].join(',')); });
+    const rows = [['seconds', 'state', 'in_play', 'state_before_stoppages', 'p_team_a', 'p_team_b', 'p_none', 'ball_x', 'ball_y', 'ball', 'players_team_a', 'players_team_b',
+      'around_ball_team_a', 'around_ball_team_b', 'player_movement', 'pitch_share', 'balls_lost_team_a', 'balls_lost_team_b',
+      'camera_mapped', 'ball_pitch_x_m', 'ball_pitch_y_m', 'ball_zone', 'team_a_width_m', 'team_b_width_m', 'team_a_back_line_m', 'team_b_back_line_m'].join(',')];
+    const PZ = R.pitch && R.pitch.ok ? R.pitch : null, zoneName = {a: 'near_team_a_goal', m: 'middle', b: 'near_team_b_goal'};
+    R.samples.forEach((s, i) => { const p = R.proba[i], b = R.ball[i], ar = R.around[i], mv = R.act[i];
+      rows.push([s.t.toFixed(2), STATE_NAMES[R.states[i]], R.stopped[i] ? 0 : 1, STATE_NAMES[R.rawStates[i]], p[0].toFixed(3), p[1].toFixed(3), p[2].toFixed(3),
+        b ? b[0].toFixed(1) : '', b ? b[1].toFixed(1) : '', ['missing', 'seen', 'filled'][R.source[i]],
+        s.people.filter(q => q.team === TEAM_A).length, s.people.filter(q => q.team === TEAM_B).length,
+        ar ? ar[0] : '', ar ? ar[1] : '', isNaN(mv) ? '' : mv.toFixed(2), s.share.toFixed(2), R.losses[i][0], R.losses[i][1],
+        s.cam ? 1 : 0, s.bp ? s.bp[0].toFixed(1) : '', s.bp ? s.bp[1].toFixed(1) : '', PZ && PZ.zone[i] ? zoneName[PZ.zone[i]] : '',
+        ...[0, 1].map(k => PZ && PZ.shapes[i] && PZ.shapes[i][k] && PZ.shapes[i][k].width != null ? PZ.shapes[i][k].width.toFixed(1) : ''),
+        ...[0, 1].map(k => PZ && PZ.shapes[i] && PZ.shapes[i][k] && PZ.shapes[i][k].line != null ? PZ.shapes[i][k].line.toFixed(1) : '')].join(',')); });
     downloadBlob('possession.csv', new Blob([rows.join('\n') + '\n'], {type: 'text/csv'}));
   });
 
@@ -1318,8 +2836,9 @@ footer a { color: inherit; }
       const cx = isR ? bx + bw - (j + 0.5) * slot : bx + (j + 0.5) * slot, h = Math.abs(b.value) * mh;
       if (h >= 1) roundRect(g, cx - w / 2, b.value > 0 ? mm - h : mm + 1, w, h, 3, b.value > 0 ? fill[0] : fill[1]);
     });
-    const stats = [[t('mLosses'), M.ball_losses.map(String)], [t('mPress'), M.pressure_on_ball.map(v => v == null ? '–' : v.toFixed(1))],
-                   [t('mLong'), S.teams.map(tm => dur1(tm.longest_spell_seconds).replace(/[\u2066\u2069]/g, ''))]];
+    const withShots = R.pitch && R.pitch.ok && R.shots && liveShots().length;   // expected goals, once there are shots
+    const stats = [[t('mLosses'), M.ball_losses.map(String)], [t('mRegain'), M.quick_regains.map(String)],
+                   withShots ? [t('xgShort'), shotTotals().map(o => o.xg.toFixed(2))] : [t('mSup'), M.superiority.share_more.map(v => v == null ? '–' : pct(v))]];
     stats.forEach(([label, vals], j) => {
       let x = S0 + toEnd * j * (bw / 3);
       g.textAlign = A; g.fillStyle = '#9aa69e'; g.font = F(400, 20); g.fillText(label, x, 564);
@@ -1371,7 +2890,7 @@ footer a { color: inherit; }
     if (mq.addEventListener) mq.addEventListener('change', redraw); else if (mq.addListener) mq.addListener(redraw);
   }
   let resizeTimer;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (R) { renderScrub(); renderMomentum(); syncTo(player.currentTime); } drawOverlay(); }, 150); });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (R) { renderScrub(); renderTimeline(); renderPitch(currentIndex(player.currentTime || R.t0)); if (!$('shots-card').hidden && liveShots().length) renderXgRace(); syncTo(player.currentTime); } drawOverlay(); }, 150); });
 
   // ------------------------------------------------------------------ the run
   function findDuration(video) {
@@ -1434,6 +2953,7 @@ footer a { color: inherit; }
 
   goBtn.addEventListener('click', async () => {
     if (running || !videoMeta) return;
+    if (recording) recording.cancelled = true;
     showError('');
     const {given, typed} = buildGiven();
     const t0 = parseClock($('from').value, 0), t1 = Math.min(videoMeta.duration, parseClock($('to').value, videoMeta.duration));
@@ -1458,12 +2978,23 @@ footer a { color: inherit; }
       for (const s of samples) for (const p of s.people) p.team = teams.assign(p.colour);
       nameTeams(teams, given);
       const {pos, source} = cleanBall(samples, videoMeta.width);
-      const {proba, states} = possession(samples, pos);
+      const {proba, states: rawStates} = possession(samples, pos);
+      const X = analyseMore(samples, rawStates, pos, source), states = X.states;     // stoppages are nobody's possession
       const summary = summarise(samples, states, source, teams, videoMeta.name, videoMeta);
-      summary.metrics = extraMetrics(samples, states, pos, source, summary);
+      X.moments = moments(summary.spells, X.regains, X.presses, X.stops, states, samples.map(s => s.t));
+      summary.metrics = extraMetrics(samples, states, pos, source, summary, X);
+      mapPitch(samples);
+      const pitch = pitchAnalysis(samples, states, false, summary.spells);
+      summary.metrics.pitch = pitchMetrics(pitch);
+      for (const m of sequenceMoments(pitch)) X.moments.push(m);
+      const shots = pitch.ok ? findShots(samples, states, pitch.dir.dirA) : [];
+      X.moments.sort((a, b) => a.t - b.t || a.kind.localeCompare(b.kind));
       const cum = []; let ca = 0, cb = 0; states.forEach(s => { if (s === TEAM_A) ca++; else if (s === TEAM_B) cb++; cum.push([ca, cb]); });
-      R = {samples, states, proba, ball: pos, source, teams, summary, cum, losses: cumulativeLosses(states),
+      R = {samples, states, rawStates, proba, ball: pos, source, teams, summary, cum, losses: cumulativeLosses(states),
+           stopped: X.stopped, stops: X.stops, around: X.around, act: X.act, pitch, flip: false, shots,
            t0: samples[0].t, t1: samples[samples.length - 1].t + 1 / HZ, customNames: typed, kitDisplay: teams.colours.map(displayColour)};
+      summaryEdited = false; momentFilter = 'top'; pitchMode = 'live'; addingShot = false;
+      summary.metrics.shots = shotMetrics();
       window.__summary = summary; window.__result = R;
       lastI = -1;
       player.addEventListener('loadedmetadata', () => { player.currentTime = R.t0; syncTo(R.t0); drawOverlay(); }, {once: true});
@@ -1479,6 +3010,7 @@ footer a { color: inherit; }
     }
   });
 
+  if (!canRecord()) { $('dl-video').hidden = true; $('video-note').hidden = true; }
   applyLang();
 })();
 </script>
